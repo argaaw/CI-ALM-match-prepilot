@@ -38,6 +38,13 @@ details.legend-box summary::-webkit-details-marker { display:none; } details.leg
 details.legend-box[open] summary::after { content:"접기"; } details.legend-box[open] summary { margin-bottom:8px; }
 .sim { border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:12px; background:var(--bg); } .sim.done { border-color:var(--nh); box-shadow:inset 4px 0 0 var(--nh); }
 .sim .play { background:var(--card); }
+.tiles { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
+.tile { display:flex; flex-direction:column; align-items:flex-start; gap:6px; padding:12px 14px; min-height:72px; text-align:left; border-radius:12px; }
+.tile .name { font-weight:700; font-size:1.05rem; } .tile .st { font-size:.85rem; color:var(--muted); }
+.tile.full { border-color:var(--nh); background:var(--soft); } .tile.full .st { color:var(--nh); font-weight:700; }
+.tile.todo { border-style:dashed; }
+.dots { display:inline-flex; gap:4px; vertical-align:middle; } .dots i { width:10px; height:10px; border-radius:50%; background:var(--line); display:inline-block; } .dots i.on { background:var(--nh); }
+.qhead { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin:0 0 6px; } .qhead h2 { margin:0; }
 .orig-block { margin:12px 0 4px; } .lede-small { color:var(--muted); font-size:.95rem; margin:0 0 10px; }
 .progress { font-size:.9rem; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between; gap:8px; }
 h2 { line-height:1.35; }
@@ -69,7 +76,7 @@ async function resumeFromServer() {
     (j.answers || []).forEach(a => { if (a.sample_id !== "meta" && a.selected_options && a.selected_options.length) { const v = parseInt(a.selected_options[0]); if (v >= 1 && v <= 7 && !S.ratings[a.sample_id]) S.ratings[a.sample_id] = v; } });
     if (j.submitted_at) S.submittedAt = j.submitted_at; save(); render(); setSync("서버에서 불러옴"); } catch (e) { setSync("서버 연결 실패(기기 저장만)"); }
 }
-const KEY = "prepilot-remote-r1k";
+const KEY = "prepilot-remote-r1l";
 let S = { step: 0, mode: "", role: "", pid: "", ci: "", nhVol: 0.8, q: 0, ratings: {}, note: "", started: null };
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) S = Object.assign(S, s); } catch (e) {}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
@@ -132,7 +139,7 @@ function stepMode() {
 }
 function stepCiDevice() {
   const c = el(`<div><h2>인공와우용 기기</h2><div class="card"><p>컴퓨터 화면의 <b>소리 번호</b>와 같은 번호의 버튼을 눌러 원래 소리를 들으세요. 휴대폰 소리는 인공와우로 스트리밍되어야 합니다. 몇 번이든 다시 들어도 됩니다.</p><div id="list"></div></div></div>`);
-  DATA.forEach((q, i) => { const b = el(`<button class="play ci" style="margin-bottom:10px">${btnLabel("▶ 소리 " + (i + 1) + " — " + q.label, "원래 소리 · 인공와우")}</button>`); b.onclick = e => play(e.currentTarget, q.orig.M, 1); c.querySelector("#list").appendChild(b); });
+  DATA.forEach((q, i) => { const b = el(`<button class="play ci" style="margin-bottom:10px">${btnLabel("▶ 소리 " + (i + 1), "원래 소리 · 인공와우")}</button>`); b.onclick = e => play(e.currentTarget, q.orig.M, 1); c.querySelector("#list").appendChild(b); });
   const back = el(`<button style="width:100%">이전</button>`); back.onclick = () => { S.step--; save(); render(); }; c.appendChild(back); return c;
 }
 function stepSetup() {
@@ -173,14 +180,19 @@ function stepVolume() {
   const n = nav(true, true, "소리 목록으로"); n.querySelector(".primary").addEventListener("click", saveMeta); c.appendChild(n); return c;
 }
 const ratedCount = q => q.sims.filter(s => S.ratings[q.id + "_" + s.k]).length;
+const dots = q => `<span class="dots">${q.sims.map(s => `<i class="${S.ratings[q.id + "_" + s.k] ? "on" : ""}"></i>`).join("")}</span>`;
+const statusText = q => { const n = ratedCount(q); return n === q.sims.length ? "완료 ✓" : n === 0 ? "시작 전" : `${q.sims.length - n}개 남음`; };
 function stepList() {
   const total = DATA.reduce((a, q) => a + q.sims.length, 0), done = DATA.reduce((a, q) => a + ratedCount(q), 0);
-  const c = el(`<div><h2>소리 목록</h2><p class="muted">원하는 순서로 고르세요. 각 소리마다 시뮬레이션 소리 5개를 평가합니다. (${done} / ${total} 완료)</p><div id="list"></div></div>`);
+  const firstTodo = DATA.findIndex(q => ratedCount(q) < q.sims.length);
+  const c = el(`<div><div class="qhead"><h2>소리 목록</h2><span class="muted">${done} / ${total} 평가함</span></div><p class="muted">원하는 순서로 고르세요. 소리마다 시뮬레이션 소리 5개를 평가합니다. 점은 평가한 개수입니다.</p>
+  ${firstTodo >= 0 ? `<button class="primary" id="jump" style="margin-bottom:12px">${done ? "이어서 하기 → 소리 " + (firstTodo + 1) : "시작하기 → 소리 1"}</button>` : ""}<div class="tiles" id="list"></div></div>`);
+  if (firstTodo >= 0) c.querySelector("#jump").onclick = () => { S.q = firstTodo; S.step = 6; save(); render(); };
   DATA.forEach((q, i) => {
-    const n = ratedCount(q); const b = el(`<button style="width:100%;margin-bottom:10px;text-align:left;display:flex;justify-content:space-between;align-items:center"><span>소리 ${i + 1} · <b>${q.label}</b></span><span class="muted">${n} / ${q.sims.length}${n === q.sims.length ? " ✓" : ""}</span></button>`);
+    const n = ratedCount(q); const b = el(`<button class="tile ${n === q.sims.length ? "full" : n === 0 ? "todo" : ""}"><span class="name">소리 ${i + 1}</span>${dots(q)}<span class="st">${statusText(q)}</span></button>`);
     b.onclick = () => { S.q = i; S.step = 6; save(); render(); }; c.querySelector("#list").appendChild(b);
   });
-  const r = el(`<div class="row" style="margin-top:8px"></div>`);
+  const r = el(`<div class="row" style="margin-top:12px"></div>`);
   const back = el(`<button>이전(소리 확인·크기)</button>`); back.onclick = () => { S.step = 4; save(); render(); }; r.appendChild(back);
   const fin = el(`<button class="primary">마치기</button>`); fin.disabled = done < total; fin.title = done < total ? "모든 시뮬레이션 소리를 평가하면 눌릴 수 있습니다" : "";
   fin.onclick = () => { S.step = 7; save(); render(); }; r.appendChild(fin); c.appendChild(r);
@@ -189,16 +201,16 @@ function stepList() {
 }
 function stepQuestion() {
   const q = DATA[S.q]; if (!S.started) { S.started = new Date().toISOString(); save(); }
-  const lyric = q.domain === "lyrics" ? `<p class="muted">가사: ${q.ref}</p>` : "";
-  const c = el(`<div><div class="picker" aria-label="소리 선택"></div><div class="progress">소리 ${S.q + 1} / ${DATA.length} · ${q.label} <span id="sync" class="muted" style="float:right">${syncState}</span></div><h2>${q.label}</h2><p class="lede-small">원래 소리(인공와우)와 시뮬레이션 소리(인공와우 반대쪽 귀) 5개가 얼마나 비슷한지 1–7점으로 평가해 주세요. 몇 번이든 다시 들어도 됩니다.</p>${lyric}
+  const lyric = "";
+  const c = el(`<div><div class="picker" aria-label="소리 선택"></div><div class="progress"><span>전체 ${DATA.reduce((a, qq) => a + ratedCount(qq), 0)} / ${DATA.reduce((a, qq) => a + qq.sims.length, 0)} 평가함</span><span id="sync" class="muted">${syncState}</span></div><div class="qhead"><h2>소리 ${S.q + 1}</h2><span class="muted">${dots(q)} ${statusText(q)}</span></div><p class="lede-small">원래 소리(인공와우)와 시뮬레이션 소리(인공와우 반대쪽 귀) 5개가 얼마나 비슷한지 1–7점으로 평가해 주세요. 몇 번이든 다시 들어도 됩니다.</p>${lyric}
   <details class="legend-box" ${S.legendOpen === false ? "" : "open"}><summary>점수 기준</summary>${legendHtml()}</details>
   <div class="card">
   ${HINT_CI()}<div class="orig-block"><button class="play ci" id="orig">${btnLabel("▶ 원래 소리", "인공와우")}</button></div>${HINT_NH()}<div id="sims"></div></div></div>`);
   const pk = c.querySelector(".picker");
-  DATA.forEach((qq, i) => { const n = ratedCount(qq); const b = el(`<button aria-current="${i === S.q}" class="${n === qq.sims.length ? "full" : ""}">${i + 1} ${qq.label}${n === qq.sims.length ? " ✓" : n ? " " + n + "/5" : ""}</button>`);
+  DATA.forEach((qq, i) => { const n = ratedCount(qq); const b = el(`<button aria-current="${i === S.q}" class="${n === qq.sims.length ? "full" : ""}">소리 ${i + 1}${n === qq.sims.length ? " ✓" : n ? " " + n + "/" + qq.sims.length : ""}</button>`);
     b.onclick = () => { S.q = i; save(); render(); }; pk.appendChild(b); });
   setTimeout(() => { const cur = pk.querySelector('[aria-current="true"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" }); }, 0);
-  if (S.mode === "two") { const o = c.querySelector("#orig"); o.innerHTML = btnLabel("원래 소리는 휴대폰에서 재생", "'소리 " + (S.q + 1) + " — " + q.label + "' 버튼"); o.disabled = true; }
+  if (S.mode === "two") { const o = c.querySelector("#orig"); o.innerHTML = btnLabel("원래 소리는 휴대폰에서 재생", "'소리 " + (S.q + 1) + "' 버튼"); o.disabled = true; }
   else c.querySelector("#orig").onclick = e => play(e.currentTarget, q.orig[ciSide()], 1);
   const lg = c.querySelector("details.legend-box"); lg.ontoggle = () => { S.legendOpen = lg.open; save(); };
   const box = c.querySelector("#sims");
@@ -218,7 +230,7 @@ function stepQuestion() {
   const list = el(`<button>목록으로</button>`); list.onclick = () => { S.step = 5; save(); render(); }; r.appendChild(list);
   const nextIdx = DATA.findIndex((qq, i) => i > S.q && ratedCount(qq) < qq.sims.length); const anyIdx = DATA.findIndex(qq => ratedCount(qq) < qq.sims.length);
   const target = nextIdx >= 0 ? nextIdx : anyIdx;
-  const next = el(`<button class="primary">${target >= 0 ? "다음 미완료 소리" : "모두 완료 → 마치기"}</button>`);
+  const next = el(`<button class="primary">${target >= 0 ? "다음 → 소리 " + (target + 1) + (ratedCount(q) < q.sims.length ? " (이 소리 " + (q.sims.length - ratedCount(q)) + "개 남음)" : "") : "모두 완료 → 마치기"}</button>`);
   next.onclick = () => { if (target >= 0) { S.q = target; S.step = 6; } else S.step = 7; save(); render(); }; r.appendChild(next); c.appendChild(r); return c;
 }
 function payload() {
