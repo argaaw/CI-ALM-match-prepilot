@@ -76,7 +76,7 @@ async function resumeFromServer() {
     (j.answers || []).forEach(a => { if (a.sample_id !== "meta" && a.selected_options && a.selected_options.length) { const v = parseInt(a.selected_options[0]); if (v >= 1 && v <= 7 && !S.ratings[a.sample_id]) S.ratings[a.sample_id] = v; } });
     if (j.submitted_at) S.submittedAt = j.submitted_at; save(); render(); setSync("서버에서 불러옴"); } catch (e) { setSync("서버 연결 실패(기기 저장만)"); }
 }
-const KEY = "prepilot-remote-r1l";
+const KEY = "prepilot-remote-r1m";
 let S = { step: 0, mode: "", role: "", pid: "", ci: "", nhVol: 0.8, q: 0, ratings: {}, note: "", started: null };
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) S = Object.assign(S, s); } catch (e) {}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
@@ -139,7 +139,7 @@ function stepMode() {
 }
 function stepCiDevice() {
   const c = el(`<div><h2>인공와우용 기기</h2><div class="card"><p>컴퓨터 화면의 <b>소리 번호</b>와 같은 번호의 버튼을 눌러 원래 소리를 들으세요. 휴대폰 소리는 인공와우로 스트리밍되어야 합니다. 몇 번이든 다시 들어도 됩니다.</p><div id="list"></div></div></div>`);
-  DATA.forEach((q, i) => { const b = el(`<button class="play ci" style="margin-bottom:10px">${btnLabel("▶ 소리 " + (i + 1), "원래 소리 · 인공와우")}</button>`); b.onclick = e => play(e.currentTarget, q.orig.M, 1); c.querySelector("#list").appendChild(b); });
+  DATA.forEach((q, i) => { const b = el(`<button class="play ci" style="margin-bottom:10px">${btnLabel("▶ " + qname(q, i), "원래 소리 · 인공와우")}</button>`); b.onclick = e => play(e.currentTarget, q.orig.M, 1); c.querySelector("#list").appendChild(b); });
   const back = el(`<button style="width:100%">이전</button>`); back.onclick = () => { S.step--; save(); render(); }; c.appendChild(back); return c;
 }
 function stepSetup() {
@@ -180,6 +180,7 @@ function stepVolume() {
   const n = nav(true, true, "소리 목록으로"); n.querySelector(".primary").addEventListener("click", saveMeta); c.appendChild(n); return c;
 }
 const ratedCount = q => q.sims.filter(s => S.ratings[q.id + "_" + s.k]).length;
+const qname = (q, i) => "소리 " + (i + 1) + (q.domain === "instrument" ? " · " + q.label : "");
 const dots = q => `<span class="dots">${q.sims.map(s => `<i class="${S.ratings[q.id + "_" + s.k] ? "on" : ""}"></i>`).join("")}</span>`;
 const statusText = q => { const n = ratedCount(q); return n === q.sims.length ? "완료 ✓" : n === 0 ? "시작 전" : `${q.sims.length - n}개 남음`; };
 function stepList() {
@@ -189,7 +190,7 @@ function stepList() {
   ${firstTodo >= 0 ? `<button class="primary" id="jump" style="margin-bottom:12px">${done ? "이어서 하기 → 소리 " + (firstTodo + 1) : "시작하기 → 소리 1"}</button>` : ""}<div class="tiles" id="list"></div></div>`);
   if (firstTodo >= 0) c.querySelector("#jump").onclick = () => { S.q = firstTodo; S.step = 6; save(); render(); };
   DATA.forEach((q, i) => {
-    const n = ratedCount(q); const b = el(`<button class="tile ${n === q.sims.length ? "full" : n === 0 ? "todo" : ""}"><span class="name">소리 ${i + 1}</span>${dots(q)}<span class="st">${statusText(q)}</span></button>`);
+    const n = ratedCount(q); const b = el(`<button class="tile ${n === q.sims.length ? "full" : n === 0 ? "todo" : ""}"><span class="name">${qname(q, i)}</span>${dots(q)}<span class="st">${statusText(q)}</span></button>`);
     b.onclick = () => { S.q = i; S.step = 6; save(); render(); }; c.querySelector("#list").appendChild(b);
   });
   const r = el(`<div class="row" style="margin-top:12px"></div>`);
@@ -202,15 +203,15 @@ function stepList() {
 function stepQuestion() {
   const q = DATA[S.q]; if (!S.started) { S.started = new Date().toISOString(); save(); }
   const lyric = "";
-  const c = el(`<div><div class="picker" aria-label="소리 선택"></div><div class="progress"><span>전체 ${DATA.reduce((a, qq) => a + ratedCount(qq), 0)} / ${DATA.reduce((a, qq) => a + qq.sims.length, 0)} 평가함</span><span id="sync" class="muted">${syncState}</span></div><div class="qhead"><h2>소리 ${S.q + 1}</h2><span class="muted">${dots(q)} ${statusText(q)}</span></div><p class="lede-small">원래 소리(인공와우)와 시뮬레이션 소리(인공와우 반대쪽 귀) 5개가 얼마나 비슷한지 1–7점으로 평가해 주세요. 몇 번이든 다시 들어도 됩니다.</p>${lyric}
+  const c = el(`<div><div class="picker" aria-label="소리 선택"></div><div class="progress"><span>전체 ${DATA.reduce((a, qq) => a + ratedCount(qq), 0)} / ${DATA.reduce((a, qq) => a + qq.sims.length, 0)} 평가함</span><span id="sync" class="muted">${syncState}</span></div><div class="qhead"><h2>${qname(q, S.q)}</h2><span class="muted">${dots(q)} ${statusText(q)}</span></div><p class="lede-small">원래 소리(인공와우)와 시뮬레이션 소리(인공와우 반대쪽 귀) 5개가 얼마나 비슷한지 1–7점으로 평가해 주세요. 몇 번이든 다시 들어도 됩니다.</p>${lyric}
   <details class="legend-box" ${S.legendOpen === false ? "" : "open"}><summary>점수 기준</summary>${legendHtml()}</details>
   <div class="card">
   ${HINT_CI()}<div class="orig-block"><button class="play ci" id="orig">${btnLabel("▶ 원래 소리", "인공와우")}</button></div>${HINT_NH()}<div id="sims"></div></div></div>`);
   const pk = c.querySelector(".picker");
-  DATA.forEach((qq, i) => { const n = ratedCount(qq); const b = el(`<button aria-current="${i === S.q}" class="${n === qq.sims.length ? "full" : ""}">소리 ${i + 1}${n === qq.sims.length ? " ✓" : n ? " " + n + "/" + qq.sims.length : ""}</button>`);
+  DATA.forEach((qq, i) => { const n = ratedCount(qq); const b = el(`<button aria-current="${i === S.q}" class="${n === qq.sims.length ? "full" : ""}">${i + 1}${qq.domain === "instrument" ? " " + qq.label : ""}${n === qq.sims.length ? " ✓" : ""}</button>`);
     b.onclick = () => { S.q = i; save(); render(); }; pk.appendChild(b); });
   setTimeout(() => { const cur = pk.querySelector('[aria-current="true"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" }); }, 0);
-  if (S.mode === "two") { const o = c.querySelector("#orig"); o.innerHTML = btnLabel("원래 소리는 휴대폰에서 재생", "'소리 " + (S.q + 1) + "' 버튼"); o.disabled = true; }
+  if (S.mode === "two") { const o = c.querySelector("#orig"); o.innerHTML = btnLabel("원래 소리는 휴대폰에서 재생", "'" + qname(q, S.q) + "' 버튼"); o.disabled = true; }
   else c.querySelector("#orig").onclick = e => play(e.currentTarget, q.orig[ciSide()], 1);
   const lg = c.querySelector("details.legend-box"); lg.ontoggle = () => { S.legendOpen = lg.open; save(); };
   const box = c.querySelector("#sims");
