@@ -24,11 +24,18 @@ button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 .picker button { flex:0 0 auto; padding:8px 12px; min-height:44px; font-size:.95rem; border-radius:999px; white-space:nowrap; }
 .picker button[aria-current="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
 .picker button.full { border-color:var(--nh); }
-.rate { display:grid; grid-template-columns:auto 1fr; gap:8px 12px; align-items:center; margin-top:10px; }
-.rate input[type=range] { grid-column:1 / -1; width:100%; height:44px; accent-color:var(--accent); margin:0; }
-.rate input[type=number] { font:inherit; font-size:1.1rem; padding:8px; width:88px; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink); text-align:center; }
-.rate .val { font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; white-space:nowrap; min-width:0; }
-.scale-labels { display:flex; justify-content:space-between; font-size:.85rem; color:var(--muted); margin-top:4px; }
+.scale { display:grid; grid-template-columns:repeat(7, 1fr); gap:5px; margin-top:12px; }
+.scale button { padding:0; min-height:48px; font-size:1.15rem; font-weight:700; border-radius:10px; background:var(--card); font-variant-numeric:tabular-nums; }
+.scale button[aria-checked="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.scale-ends { display:flex; justify-content:space-between; font-size:.82rem; color:var(--muted); margin-top:5px; }
+.pick { margin:10px 0 0; min-height:1.5em; font-size:1rem; color:var(--muted); } .pick b { color:var(--accent); font-size:1.1rem; }
+.legend { display:grid; grid-template-columns:auto 1fr; gap:4px 10px; align-items:center; margin:0; font-size:.95rem; }
+.legend .n { display:inline-flex; align-items:center; justify-content:center; min-width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:var(--card); font-weight:700; font-variant-numeric:tabular-nums; }
+.legend .n.lo { border-color:var(--ci); } .legend .n.hi { border-color:var(--nh); }
+details.legend-box { margin:0 0 12px; border:1px solid var(--line); border-radius:12px; background:var(--bg); padding:10px 12px; }
+details.legend-box summary { cursor:pointer; font-weight:700; list-style:none; display:flex; justify-content:space-between; align-items:center; min-height:28px; }
+details.legend-box summary::-webkit-details-marker { display:none; } details.legend-box summary::after { content:"펼치기"; font-size:.85rem; font-weight:500; color:var(--muted); }
+details.legend-box[open] summary::after { content:"접기"; } details.legend-box[open] summary { margin-bottom:8px; }
 .sim { border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:12px; background:var(--bg); } .sim.done { border-color:var(--nh); box-shadow:inset 4px 0 0 var(--nh); }
 .sim .play { background:var(--card); }
 .orig-block { margin:12px 0 4px; } .lede-small { color:var(--muted); font-size:.95rem; margin:0 0 10px; }
@@ -59,10 +66,10 @@ async function saveMeta() {
 }
 async function resumeFromServer() {
   try { const j = await api({ action: "resume" }); if (!j) return;
-    (j.answers || []).forEach(a => { if (a.sample_id !== "meta" && a.selected_options && a.selected_options.length) { const v = parseInt(a.selected_options[0]); if (v >= 1 && v <= 10 && !S.ratings[a.sample_id]) S.ratings[a.sample_id] = v; } });
+    (j.answers || []).forEach(a => { if (a.sample_id !== "meta" && a.selected_options && a.selected_options.length) { const v = parseInt(a.selected_options[0]); if (v >= 1 && v <= 7 && !S.ratings[a.sample_id]) S.ratings[a.sample_id] = v; } });
     if (j.submitted_at) S.submittedAt = j.submitted_at; save(); render(); setSync("서버에서 불러옴"); } catch (e) { setSync("서버 연결 실패(기기 저장만)"); }
 }
-const KEY = "prepilot-remote-r1j";
+const KEY = "prepilot-remote-r1k";
 let S = { step: 0, mode: "", role: "", pid: "", ci: "", nhVol: 0.8, q: 0, ratings: {}, note: "", started: null };
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) S = Object.assign(S, s); } catch (e) {}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
@@ -77,6 +84,8 @@ const nhSide = () => (S.mode === "headphone" ? (S.ci === "L" ? "R" : "L") : "M")
 const ciSide = () => (S.mode === "headphone" ? S.ci : "M");
 const HINT_CI = () => S.mode === "two" ? "" : (S.mode === "one" ? "<p class='warn'>먼저 휴대폰 소리 출력을 <b>인공와우</b>로 바꾼 뒤 재생하세요.</p>" : "");
 const HINT_NH = () => S.mode === "one" ? "<p class='warn'>먼저 휴대폰 소리 출력을 <b>이어폰(인공와우 반대쪽 귀)</b>으로 바꾼 뒤 재생하세요.</p>" : "";
+const SCALE = ["매우 다르다", "다르다", "약간 다르다", "다르지도 비슷하지도 않다", "약간 비슷하다", "비슷하다", "매우 비슷하다"];
+const legendHtml = () => `<div class="legend">${SCALE.map((t, i) => `<span class="n ${i === 0 ? "lo" : i === 6 ? "hi" : ""}">${i + 1}</span><span>${t}</span>`).join("")}</div>`;
 const btnLabel = (main, sub) => `<span class="t">${main}</span><span class="sub">${sub}</span>`;
 function el(h) { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstElementChild; }
 function render() {
@@ -93,6 +102,7 @@ function nav(prevOk, nextOk, nextLabel) {
 function stepIntro() {
   const c = el(`<div><h1>소리 비교 설문</h1>
   <div class="card"><p>인공와우로 듣는 소리를 흉내 낸 여러 가지 시뮬레이션 소리가 <b>실제 인공와우 소리와 얼마나 비슷한지</b> 여쭙는 설문입니다. 정답은 없고, 들리는 느낌 그대로 답해 주시면 됩니다.</p>
+  <p>시뮬레이션 소리마다 원래 소리와 얼마나 비슷한지 <b>1점(매우 다르다)부터 7점(매우 비슷하다)</b> 사이에서 고릅니다.</p>
   <p>소리 7개 × 시뮬레이션 소리 5개 = 35번 평가하며, 약 15–20분 걸립니다. 각 소리는 몇 번이든 다시 들을 수 있습니다. 중간에 멈춰도 이 기기·브라우저에서 다시 열면 이어서 할 수 있습니다.</p>
   <p>듣는 방식은 다음 화면에서 고릅니다(휴대폰에서 인공와우로 블루투스 스트리밍 + 컴퓨터, 휴대폰 한 대, 또는 헤드폰). 조용한 곳에서 해 주세요.</p></div>
   <div class="card"><p>참가자 번호: <b>휴대폰 번호 뒷자리 4자리</b>를 입력해 주세요. (예: 010-1234-<b>5678</b> → 5678) 나중에 이어서 할 때도 같은 번호를 쓰면 됩니다.</p>
@@ -180,7 +190,8 @@ function stepList() {
 function stepQuestion() {
   const q = DATA[S.q]; if (!S.started) { S.started = new Date().toISOString(); save(); }
   const lyric = q.domain === "lyrics" ? `<p class="muted">가사: ${q.ref}</p>` : "";
-  const c = el(`<div><div class="picker" aria-label="소리 선택"></div><div class="progress">소리 ${S.q + 1} / ${DATA.length} · ${q.label} <span id="sync" class="muted" style="float:right">${syncState}</span></div><h2>${q.label}</h2><p class="lede-small">원래 소리(인공와우)와 시뮬레이션 소리(인공와우 반대쪽 귀) 5개가 얼마나 비슷한지 평가해 주세요. 몇 번이든 다시 들어도 됩니다.</p>${lyric}
+  const c = el(`<div><div class="picker" aria-label="소리 선택"></div><div class="progress">소리 ${S.q + 1} / ${DATA.length} · ${q.label} <span id="sync" class="muted" style="float:right">${syncState}</span></div><h2>${q.label}</h2><p class="lede-small">원래 소리(인공와우)와 시뮬레이션 소리(인공와우 반대쪽 귀) 5개가 얼마나 비슷한지 1–7점으로 평가해 주세요. 몇 번이든 다시 들어도 됩니다.</p>${lyric}
+  <details class="legend-box" ${S.legendOpen === false ? "" : "open"}><summary>점수 기준</summary>${legendHtml()}</details>
   <div class="card">
   ${HINT_CI()}<div class="orig-block"><button class="play ci" id="orig">${btnLabel("▶ 원래 소리", "인공와우")}</button></div>${HINT_NH()}<div id="sims"></div></div></div>`);
   const pk = c.querySelector(".picker");
@@ -189,17 +200,18 @@ function stepQuestion() {
   setTimeout(() => { const cur = pk.querySelector('[aria-current="true"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" }); }, 0);
   if (S.mode === "two") { const o = c.querySelector("#orig"); o.innerHTML = btnLabel("원래 소리는 휴대폰에서 재생", "'소리 " + (S.q + 1) + " — " + q.label + "' 버튼"); o.disabled = true; }
   else c.querySelector("#orig").onclick = e => play(e.currentTarget, q.orig[ciSide()], 1);
+  const lg = c.querySelector("details.legend-box"); lg.ontoggle = () => { S.legendOpen = lg.open; save(); };
   const box = c.querySelector("#sims");
   q.sims.forEach(s => {
     const key = q.id + "_" + s.k; const cur = S.ratings[key];
     const d = el(`<div class="sim ${cur ? "done" : ""}"><button class="play nh">${btnLabel("▶ 시뮬레이션 소리 " + s.k, "인공와우 반대쪽 귀")}</button>
-      <div class="rate"><input type="range" min="1" max="10" step="1" value="${cur || 5}" aria-label="시뮬레이션 소리 ${s.k} 유사도"><input type="number" min="1" max="10" step="1" inputmode="numeric" value="${cur || ""}" placeholder="–"><span class="val">${cur ? cur + " 점" : "미평가"}</span></div>
-      <div class="scale-labels"><span>1 = 전혀 다름</span><span>10 = 똑같음</span></div></div>`);
+      <div class="scale" role="radiogroup" aria-label="시뮬레이션 소리 ${s.k} 유사도">${[1,2,3,4,5,6,7].map(v => `<button type="button" role="radio" data-v="${v}" aria-checked="${cur === v}" aria-label="${v}점 ${SCALE[v - 1]}">${v}</button>`).join("")}</div>
+      <div class="scale-ends"><span>1 = 매우 다르다</span><span>7 = 매우 비슷하다</span></div>
+      <p class="pick">${cur ? `<b>${cur}점</b> · ${SCALE[cur - 1]}` : "아직 고르지 않았습니다"}</p></div>`);
     d.querySelector(".play").onclick = e => play(e.currentTarget, s.files[nhSide()], S.nhVol);
-    const rg = d.querySelector("input[type=range]"), nm = d.querySelector("input[type=number]"), val = d.querySelector(".val");
-    const set = v => { v = Math.max(1, Math.min(10, Math.round(v))); S.ratings[key] = v; save(); rg.value = v; nm.value = v; val.textContent = v + " 점"; d.classList.add("done"); saveRating(key, v); };
-    rg.oninput = () => set(parseInt(rg.value)); rg.onchange = () => set(parseInt(rg.value));
-    nm.onchange = () => { if (nm.value !== "") set(parseFloat(nm.value)); };
+    const btns = Array.from(d.querySelectorAll(".scale button")), pick = d.querySelector(".pick");
+    const set = v => { S.ratings[key] = v; save(); btns.forEach(b => b.setAttribute("aria-checked", String(parseInt(b.dataset.v) === v))); pick.innerHTML = `<b>${v}점</b> · ${SCALE[v - 1]}`; d.classList.add("done"); saveRating(key, v); };
+    btns.forEach(b => b.onclick = () => set(parseInt(b.dataset.v)));
     box.appendChild(d);
   });
   const r = el(`<div class="row"></div>`);
