@@ -58,7 +58,7 @@ async function resumeFromServer() {
     (j.answers || []).forEach(a => { if (a.sample_id !== "meta" && a.selected_options && a.selected_options.length) { const v = parseInt(a.selected_options[0]); if (v >= 1 && v <= 10 && !S.ratings[a.sample_id]) S.ratings[a.sample_id] = v; } });
     if (j.submitted_at) S.submittedAt = j.submitted_at; save(); render(); setSync("서버에서 불러옴"); } catch (e) { setSync("서버 연결 실패(기기 저장만)"); }
 }
-const KEY = "prepilot-remote-r1h";
+const KEY = "prepilot-remote-r1i";
 let S = { step: 0, mode: "", role: "", pid: "", ci: "", nhVol: 0.8, q: 0, ratings: {}, note: "", started: null };
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) S = Object.assign(S, s); } catch (e) {}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
@@ -89,8 +89,16 @@ function stepIntro() {
   const c = el(`<div><h1>소리 비교 설문</h1>
   <div class="card"><p>인공와우로 듣는 소리를 흉내 낸 여러 가지 시뮬레이션 소리가 <b>실제 인공와우 소리와 얼마나 비슷한지</b> 여쭙는 설문입니다. 정답은 없고, 들리는 느낌 그대로 답해 주시면 됩니다.</p>
   <p>소리 7개 × 시뮬레이션 소리 5개 = 35번 평가하며, 약 15–20분 걸립니다. 각 소리는 몇 번이든 다시 들을 수 있습니다. 중간에 멈춰도 이 기기·브라우저에서 다시 열면 이어서 할 수 있습니다.</p>
-  <p>듣는 방식은 다음 화면에서 고릅니다(휴대폰에서 인공와우로 블루투스 스트리밍 + 컴퓨터, 휴대폰 한 대, 또는 헤드폰). 조용한 곳에서 해 주세요.</p></div></div>`);
-  c.appendChild(nav(false, true, "시작")); return c;
+  <p>듣는 방식은 다음 화면에서 고릅니다(휴대폰에서 인공와우로 블루투스 스트리밍 + 컴퓨터, 휴대폰 한 대, 또는 헤드폰). 조용한 곳에서 해 주세요.</p></div>
+  <div class="card"><p>참가자 번호: <b>휴대폰 번호 뒷자리 4자리</b>를 입력해 주세요. (예: 010-1234-<b>5678</b> → 5678) 나중에 이어서 할 때도 같은 번호를 쓰면 됩니다.</p>
+  <input type="tel" id="pid" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="숫자 4자리" style="font:inherit;font-size:1.4rem;letter-spacing:.3em;text-align:center;width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)">
+  <p class="muted" id="pidmsg" style="margin-top:8px"></p></div></div>`);
+  const pidIn = c.querySelector("#pid"), pidMsg = c.querySelector("#pidmsg"); pidIn.value = S.pid || "";
+  const applyPid = () => { const v = pidIn.value.replace(/[^0-9]/g, "").slice(0, 4); pidIn.value = v;
+    if (v.length === 4) { if (S.pid !== v) { S.pid = v; save(); resumeFromServer(); } pidMsg.textContent = "참가자 번호: " + v; } else { S.pid = ""; save(); pidMsg.textContent = "숫자 4자리를 입력해 주세요."; }
+    const nb = c.querySelector(".primary"); if (nb) nb.disabled = !S.pid; };
+  pidIn.oninput = applyPid; pidIn.onblur = applyPid; setTimeout(applyPid, 0);
+  c.appendChild(nav(false, !!S.pid, "시작")); return c;
 }
 function stepMode() {
   const c = el(`<div><h2>듣는 방식</h2>
@@ -113,17 +121,14 @@ function stepCiDevice() {
   const back = el(`<button style="width:100%">이전</button>`); back.onclick = () => { S.step--; save(); render(); }; c.appendChild(back); return c;
 }
 function stepSetup() {
+  if (S.mode !== "headphone") {
+    S.ci = S.ci || "L"; save();
+    const c = el(`<div><h2>준비</h2><div class="card"><p>${S.mode === "two" ? "휴대폰이 인공와우에 블루투스로 연결되어 있는지, 컴퓨터(또는 태블릿)에는 이어폰이 <b>인공와우 반대쪽 귀</b>에 꽂혀 있는지 확인해 주세요." : "휴대폰이 인공와우와 이어폰 둘 다에 연결되어 있는지 확인해 주세요. 소리 출력을 바꿀 수 있어야 합니다."}</p></div></div>`);
+    c.appendChild(nav(true, true)); return c;
+  }
   const c = el(`<div><h2>참가자 정보</h2>
-  <div class="card"><p>참가자 번호: <b>휴대폰 번호 뒷자리 4자리</b>를 입력해 주세요. (예: 010-1234-<b>5678</b> → 5678) 나중에 이어서 할 때도 같은 번호를 쓰면 됩니다.</p>
-  <input type="tel" id="pid" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="숫자 4자리" style="font:inherit;font-size:1.4rem;letter-spacing:.3em;text-align:center;width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)">
-  <p class="muted" id="pidmsg" style="margin-top:8px"></p></div>
   <div class="card"><p>인공와우는 어느 쪽 귀입니까?</p><div class="choices" id="ci"></div></div></div>`);
   if (S.mode !== "headphone" && !S.ci) S.ci = "L";
-  const pidIn = c.querySelector("#pid"), pidMsg = c.querySelector("#pidmsg"); pidIn.value = S.pid || "";
-  const applyPid = () => { const v = pidIn.value.replace(/[^0-9]/g, "").slice(0, 4); pidIn.value = v;
-    if (v.length === 4) { if (S.pid !== v) { S.pid = v; save(); resumeFromServer(); } pidMsg.textContent = "참가자 번호: " + v; } else { S.pid = ""; save(); pidMsg.textContent = "숫자 4자리를 입력해 주세요."; }
-    const nb = c.querySelector(".primary"); if (nb) nb.disabled = !(S.pid && S.ci); };
-  pidIn.oninput = applyPid; pidIn.onblur = applyPid; setTimeout(applyPid, 0);
   [["L", "왼쪽"], ["R", "오른쪽"]].forEach(([v, l]) => { const b = el(`<button aria-pressed="${S.ci === v}">${l}</button>`); b.onclick = () => { S.ci = v; save(); render(); }; c.querySelector("#ci").appendChild(b); });
   c.appendChild(nav(true, S.pid && S.ci)); return c;
 }
