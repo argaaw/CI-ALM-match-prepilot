@@ -6,12 +6,13 @@
   --font:"Noto Sans KR", -apple-system, system-ui, sans-serif; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#15171a; --card:#1e2126; --ink:#ecebe6; --muted:#a3a59e; --line:#34383e; --accent:#8db9dd; --accent-ink:#0f1a24; --ci:#e28a63; --nh:#6fc48f; --soft:#262d35; --warn:#f0a3a3; color-scheme:dark } }
 :root[data-theme="dark"] { --bg:#15171a; --card:#1e2126; --ink:#ecebe6; --muted:#a3a59e; --line:#34383e; --accent:#8db9dd; --accent-ink:#0f1a24; --ci:#e28a63; --nh:#6fc48f; --soft:#262d35; --warn:#f0a3a3; color-scheme:dark }
-body { background:var(--bg); color:var(--ink); font-family:var(--font); font-size:18px; line-height:1.55; }
+body { background:var(--bg); color:var(--ink); font-family:var(--font); font-size:18px; line-height:1.55; word-break:keep-all; overflow-wrap:anywhere; }
 .wrap { max-width:640px; margin:0 auto; padding-inline:16px; padding-block:20px 48px; }
 h1 { font-size:1.45rem; margin:0 0 10px; text-wrap:balance; } h2 { font-size:1.2rem; margin:0 0 10px; } p { margin:0 0 12px; }
 .muted { color:var(--muted); font-size:.95rem; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:14px; }
-button { font:inherit; cursor:pointer; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:14px 18px; font-size:1.05rem; min-height:52px; }
+button { font:inherit; cursor:pointer; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:12px 16px; font-size:1.05rem; min-height:52px; line-height:1.3; text-wrap:balance; }
+button .sub { display:block; font-size:.82rem; font-weight:500; opacity:.8; margin-top:2px; } button .t { display:block; }
 button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 .primary { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); width:100%; font-weight:700; }
 .primary[disabled] { opacity:.45; cursor:not-allowed; }
@@ -49,9 +50,11 @@ details.legend-box[open] summary::after { content:"접기"; } details.legend-box
 .progress { font-size:.9rem; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between; gap:8px; }
 h2 { line-height:1.35; }
 input[type=range] { width:100%; }
+#pid::placeholder { letter-spacing:normal; font-size:1.05rem; }
 textarea { width:100%; min-height:90px; font:inherit; border:1px solid var(--line); border-radius:10px; padding:10px; background:var(--card); color:var(--ink); }
-.warn { color:var(--warn); font-weight:500; }
-.row { display:flex; gap:10px; } .row button { flex:1; }
+.warn { color:var(--warn); font-size:.95rem; font-weight:500; background:color-mix(in srgb, var(--warn) 8%, transparent); border-left:3px solid var(--warn); border-radius:0 8px 8px 0; padding:8px 10px; margin:0 0 10px; }
+.row { display:flex; gap:10px; } .row button { flex:1; min-width:0; } .row .primary { flex:1.4; }
+details.more { margin-top:14px; } details.more summary { cursor:pointer; color:var(--muted); font-size:.95rem; }
 </style>
 <div class="wrap" id="app"></div>
 <script>
@@ -76,7 +79,7 @@ async function resumeFromServer() {
     (j.answers || []).forEach(a => { if (a.sample_id !== "meta" && a.selected_options && a.selected_options.length) { const v = parseInt(a.selected_options[0]); if (v >= 1 && v <= 7 && !S.ratings[a.sample_id]) S.ratings[a.sample_id] = v; } });
     if (j.submitted_at) S.submittedAt = j.submitted_at; save(); render(); setSync("서버에서 불러옴"); } catch (e) { setSync("서버 연결 실패(기기 저장만)"); }
 }
-const KEY = "prepilot-remote-r1n";
+const KEY = "prepilot-remote-r1o";
 let S = { step: 0, mode: "", role: "", pid: "", ci: "", nhVol: 0.8, q: 0, ratings: {}, note: "", started: null };
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) S = Object.assign(S, s); } catch (e) {}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
@@ -194,7 +197,7 @@ function stepList() {
     b.onclick = () => { S.q = i; S.step = 6; save(); render(); }; c.querySelector("#list").appendChild(b);
   });
   const r = el(`<div class="row" style="margin-top:12px"></div>`);
-  const back = el(`<button>이전(소리 확인·크기)</button>`); back.onclick = () => { S.step = 4; save(); render(); }; r.appendChild(back);
+  const back = el(`<button>이전</button>`); back.onclick = () => { S.step = 4; save(); render(); }; r.appendChild(back);
   const fin = el(`<button class="primary">마치기</button>`); fin.disabled = done < total; fin.title = done < total ? "모든 시뮬레이션 소리를 평가하면 눌릴 수 있습니다" : "";
   fin.onclick = () => { S.step = 7; save(); render(); }; r.appendChild(fin); c.appendChild(r);
   if (done < total) c.appendChild(el(`<p class="muted" style="margin-top:8px">아직 평가하지 않은 시뮬레이션 소리가 ${total - done}개 있습니다.</p>`));
@@ -231,7 +234,8 @@ function stepQuestion() {
   const list = el(`<button>목록으로</button>`); list.onclick = () => { S.step = 5; save(); render(); }; r.appendChild(list);
   const nextIdx = DATA.findIndex((qq, i) => i > S.q && ratedCount(qq) < qq.sims.length); const anyIdx = DATA.findIndex(qq => ratedCount(qq) < qq.sims.length);
   const target = nextIdx >= 0 ? nextIdx : anyIdx;
-  const next = el(`<button class="primary">${target >= 0 ? "다음 → 소리 " + (target + 1) + (ratedCount(q) < q.sims.length ? " (이 소리 " + (q.sims.length - ratedCount(q)) + "개 남음)" : "") : "모두 완료 → 마치기"}</button>`);
+  const left = q.sims.length - ratedCount(q);
+  const next = el(`<button class="primary">${target >= 0 ? btnLabel("다음: 소리 " + (target + 1), left ? "이 소리 " + left + "개 남음" : "이 소리 완료") : btnLabel("마치기", "모두 평가했습니다")}</button>`);
   next.onclick = () => { if (target >= 0) { S.q = target; S.step = 6; } else S.step = 7; save(); render(); }; r.appendChild(next); c.appendChild(r); return c;
 }
 function payload() {
@@ -260,7 +264,8 @@ function stepDone() {
   }
   const cp = el(`<button style="width:100%;margin-top:8px">응답 복사</button>`); const ta2 = el(`<textarea readonly style="margin-top:8px;font-size:.8rem;min-height:140px"></textarea>`); ta2.value = payload();
   cp.onclick = () => { ta2.value = payload(); navigator.clipboard.writeText(ta2.value).then(() => cp.textContent = "복사되었습니다").catch(() => { ta2.select(); cp.textContent = "길게 눌러 복사해 주세요"; }); };
-  sb.appendChild(cp); sb.appendChild(ta2);
+  if (API_URL || FORM_URL) { const more = el(`<details class="more"><summary>제출이 안 될 때</summary></details>`); more.appendChild(cp); more.appendChild(ta2); sb.appendChild(more); }
+  else { sb.appendChild(cp); sb.appendChild(ta2); }
   const back = el(`<button style="width:100%;margin-top:12px">소리 목록으로 돌아가기</button>`); back.onclick = () => { S.step = 5; save(); render(); }; c.appendChild(back);
   return c;
 }
