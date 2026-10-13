@@ -15,7 +15,8 @@ button { font:inherit; cursor:pointer; border-radius:12px; border:1px solid var(
 button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 .primary { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); width:100%; font-weight:700; }
 .primary[disabled] { opacity:.45; cursor:not-allowed; }
-.play { width:100%; display:flex; align-items:center; gap:10px; justify-content:center; font-weight:700; }
+.play { width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-weight:700; line-height:1.25; padding:12px 16px; }
+.play .sub { font-size:.82rem; font-weight:500; opacity:.8; letter-spacing:.01em; }
 .play.ci { border-color:var(--ci); color:var(--ci); } .play.nh { border-color:var(--nh); color:var(--nh); }
 .play.on { background:var(--soft); }
 .choices { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; } .choices button[aria-pressed="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
@@ -28,8 +29,11 @@ button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 .rate input[type=number] { font:inherit; font-size:1.1rem; padding:8px; width:88px; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink); text-align:center; }
 .rate .val { font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; white-space:nowrap; min-width:0; }
 .scale-labels { display:flex; justify-content:space-between; font-size:.85rem; color:var(--muted); margin-top:4px; }
-.sim { border-top:1px solid var(--line); padding-top:12px; margin-top:12px; } .sim.done { border-left:4px solid var(--nh); padding-left:10px; }
-.progress { font-size:.9rem; color:var(--muted); margin-bottom:8px; }
+.sim { border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:12px; background:var(--bg); } .sim.done { border-color:var(--nh); box-shadow:inset 4px 0 0 var(--nh); }
+.sim .play { background:var(--card); }
+.orig-block { margin:12px 0 4px; } .lede-small { color:var(--muted); font-size:.95rem; margin:0 0 10px; }
+.progress { font-size:.9rem; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between; gap:8px; }
+h2 { line-height:1.35; }
 input[type=range] { width:100%; }
 textarea { width:100%; min-height:90px; font:inherit; border:1px solid var(--line); border-radius:10px; padding:10px; background:var(--card); color:var(--ink); }
 .warn { color:var(--warn); font-weight:500; }
@@ -58,7 +62,7 @@ async function resumeFromServer() {
     (j.answers || []).forEach(a => { if (a.sample_id !== "meta" && a.selected_options && a.selected_options.length) { const v = parseInt(a.selected_options[0]); if (v >= 1 && v <= 10 && !S.ratings[a.sample_id]) S.ratings[a.sample_id] = v; } });
     if (j.submitted_at) S.submittedAt = j.submitted_at; save(); render(); setSync("서버에서 불러옴"); } catch (e) { setSync("서버 연결 실패(기기 저장만)"); }
 }
-const KEY = "prepilot-remote-r1i";
+const KEY = "prepilot-remote-r1j";
 let S = { step: 0, mode: "", role: "", pid: "", ci: "", nhVol: 0.8, q: 0, ratings: {}, note: "", started: null };
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) S = Object.assign(S, s); } catch (e) {}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
@@ -73,6 +77,7 @@ const nhSide = () => (S.mode === "headphone" ? (S.ci === "L" ? "R" : "L") : "M")
 const ciSide = () => (S.mode === "headphone" ? S.ci : "M");
 const HINT_CI = () => S.mode === "two" ? "" : (S.mode === "one" ? "<p class='warn'>먼저 휴대폰 소리 출력을 <b>인공와우</b>로 바꾼 뒤 재생하세요.</p>" : "");
 const HINT_NH = () => S.mode === "one" ? "<p class='warn'>먼저 휴대폰 소리 출력을 <b>이어폰(인공와우 반대쪽 귀)</b>으로 바꾼 뒤 재생하세요.</p>" : "";
+const btnLabel = (main, sub) => `<span class="t">${main}</span><span class="sub">${sub}</span>`;
 function el(h) { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstElementChild; }
 function render() {
   if (playingBtn) { audio.pause(); playingBtn = null; }
@@ -117,7 +122,7 @@ function stepMode() {
 }
 function stepCiDevice() {
   const c = el(`<div><h2>인공와우용 기기</h2><div class="card"><p>컴퓨터 화면의 <b>소리 번호</b>와 같은 번호의 버튼을 눌러 원래 소리를 들으세요. 휴대폰 소리는 인공와우로 스트리밍되어야 합니다. 몇 번이든 다시 들어도 됩니다.</p><div id="list"></div></div></div>`);
-  DATA.forEach((q, i) => { const b = el(`<button class="play ci" style="margin-bottom:10px">▶ 소리 ${i + 1} — ${q.label} (원래 소리)</button>`); b.onclick = e => play(e.currentTarget, q.orig.M, 1); c.querySelector("#list").appendChild(b); });
+  DATA.forEach((q, i) => { const b = el(`<button class="play ci" style="margin-bottom:10px">${btnLabel("▶ 소리 " + (i + 1) + " — " + q.label, "원래 소리 · 인공와우")}</button>`); b.onclick = e => play(e.currentTarget, q.orig.M, 1); c.querySelector("#list").appendChild(b); });
   const back = el(`<button style="width:100%">이전</button>`); back.onclick = () => { S.step--; save(); render(); }; c.appendChild(back); return c;
 }
 function stepSetup() {
@@ -139,7 +144,7 @@ function stepCheck() {
     : S.mode === "two" ? "이 기기(컴퓨터)에서는 시뮬레이션 소리만 나옵니다. 이어폰을 인공와우 반대쪽 귀에 꽂고 아래 버튼으로 소리가 나는지 확인하세요. 원래 소리는 휴대폰에서 듣습니다."
     : "원래 소리는 출력을 인공와우로 바꾼 뒤, 시뮬레이션 소리는 이어폰으로 바꾼 뒤 재생해 보세요. 출력 전환은 휴대폰의 소리 출력 선택(제어 센터·빠른 설정)에서 합니다.";
   const c = el(`<div><h2>소리 확인</h2><div class="card"><p>${txt}</p>
-  <button class="play ci" id="t1">▶ 원래 소리 (인공와우)</button><p></p><button class="play nh" id="t2">▶ 시뮬레이션 소리 (인공와우 반대쪽 귀)</button></div></div>`);
+  <button class="play ci" id="t1">${btnLabel("▶ 원래 소리", "인공와우")}</button><p></p><button class="play nh" id="t2">${btnLabel("▶ 시뮬레이션 소리", "인공와우 반대쪽 귀")}</button></div></div>`);
   if (S.mode === "two") c.querySelector("#t1").hidden = true;
   c.querySelector("#t1").onclick = e => play(e.currentTarget, q.orig[ciSide()], 1);
   c.querySelector("#t2").onclick = e => play(e.currentTarget, q.sims[0].files[nhSide()], S.nhVol);   // sims[0] = me201_song
@@ -147,8 +152,8 @@ function stepCheck() {
 }
 function stepVolume() {
   const q = CHECK(); const c = el(`<div><h2>소리 크기 맞추기</h2>
-  <div class="card" id="c1"><p>1) 인공와우 쪽 소리를 들으며 <b>기기 볼륨</b>을 편안하고 또렷한 크기로 맞춰 주세요. 이후에는 기기 볼륨을 바꾸지 마세요.</p><button class="play ci" id="a">▶ 인공와우 쪽 소리</button></div>
-  <div class="card"><p>2) 인공와우 반대쪽 귀 소리를 들으며 아래 슬라이더로 <b>두 쪽이 비슷한 크기</b>로 들리게 맞춰 주세요.</p><button class="play nh" id="b">▶ 인공와우 반대쪽 귀 소리</button>
+  <div class="card" id="c1"><p>1) 인공와우 쪽 소리를 들으며 <b>기기 볼륨</b>을 편안하고 또렷한 크기로 맞춰 주세요. 이후에는 기기 볼륨을 바꾸지 마세요.</p><button class="play ci" id="a">${btnLabel("▶ 원래 소리", "인공와우")}</button></div>
+  <div class="card"><p>2) 인공와우 반대쪽 귀 소리를 들으며 아래 슬라이더로 <b>두 쪽이 비슷한 크기</b>로 들리게 맞춰 주세요.</p><button class="play nh" id="b">${btnLabel("▶ 시뮬레이션 소리", "인공와우 반대쪽 귀")}</button>
   <p style="margin-top:12px">인공와우 반대쪽 귀 소리 크기: <b id="v"></b></p><input type="range" id="r" min="0.15" max="1" step="0.05"></div></div>`);
   if (S.mode === "two") c.querySelector("#c1").innerHTML = "<p>1) 휴대폰에서 '소리 " + (DATA.indexOf(q) + 1) + " — 피아노 (원래 소리)'를 들으며 휴대폰 볼륨을 편안하고 또렷한 크기로 맞춰 주세요. 이후에는 바꾸지 마세요.</p>";
   else c.querySelector("#a").onclick = e => play(e.currentTarget, q.orig[ciSide()], 1);
@@ -175,19 +180,19 @@ function stepList() {
 function stepQuestion() {
   const q = DATA[S.q]; if (!S.started) { S.started = new Date().toISOString(); save(); }
   const lyric = q.domain === "lyrics" ? `<p class="muted">가사: ${q.ref}</p>` : "";
-  const c = el(`<div><div class="picker" aria-label="소리 선택"></div><div class="progress">소리 ${S.q + 1} / ${DATA.length} · ${q.label} <span id="sync" class="muted" style="float:right">${syncState}</span></div><h2>${q.label}: 원래 소리와 시뮬레이션 소리 5개를 비교해 주세요</h2>${lyric}
-  <div class="card"><p class="muted">원래 소리는 인공와우로, 시뮬레이션 소리는 인공와우 반대쪽 귀로 들립니다. 몇 번이든 다시 들어도 됩니다. 1 = 전혀 다름, 10 = 똑같음.</p>
-  ${HINT_CI()}<button class="play ci" id="orig">▶ 원래 소리 (인공와우 쪽)</button>${HINT_NH()}<div id="sims"></div></div></div>`);
+  const c = el(`<div><div class="picker" aria-label="소리 선택"></div><div class="progress">소리 ${S.q + 1} / ${DATA.length} · ${q.label} <span id="sync" class="muted" style="float:right">${syncState}</span></div><h2>${q.label}</h2><p class="lede-small">원래 소리(인공와우)와 시뮬레이션 소리(인공와우 반대쪽 귀) 5개가 얼마나 비슷한지 평가해 주세요. 몇 번이든 다시 들어도 됩니다.</p>${lyric}
+  <div class="card">
+  ${HINT_CI()}<div class="orig-block"><button class="play ci" id="orig">${btnLabel("▶ 원래 소리", "인공와우")}</button></div>${HINT_NH()}<div id="sims"></div></div></div>`);
   const pk = c.querySelector(".picker");
   DATA.forEach((qq, i) => { const n = ratedCount(qq); const b = el(`<button aria-current="${i === S.q}" class="${n === qq.sims.length ? "full" : ""}">${i + 1} ${qq.label}${n === qq.sims.length ? " ✓" : n ? " " + n + "/5" : ""}</button>`);
     b.onclick = () => { S.q = i; save(); render(); }; pk.appendChild(b); });
   setTimeout(() => { const cur = pk.querySelector('[aria-current="true"]'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" }); }, 0);
-  if (S.mode === "two") { const o = c.querySelector("#orig"); o.textContent = "원래 소리는 휴대폰에서 '소리 " + (S.q + 1) + " — " + q.label + "'을 재생하세요"; o.disabled = true; }
+  if (S.mode === "two") { const o = c.querySelector("#orig"); o.innerHTML = btnLabel("원래 소리는 휴대폰에서 재생", "'소리 " + (S.q + 1) + " — " + q.label + "' 버튼"); o.disabled = true; }
   else c.querySelector("#orig").onclick = e => play(e.currentTarget, q.orig[ciSide()], 1);
   const box = c.querySelector("#sims");
   q.sims.forEach(s => {
     const key = q.id + "_" + s.k; const cur = S.ratings[key];
-    const d = el(`<div class="sim ${cur ? "done" : ""}"><button class="play nh">▶ 시뮬레이션 소리 ${s.k} (인공와우 반대쪽 귀)</button>
+    const d = el(`<div class="sim ${cur ? "done" : ""}"><button class="play nh">${btnLabel("▶ 시뮬레이션 소리 " + s.k, "인공와우 반대쪽 귀")}</button>
       <div class="rate"><input type="range" min="1" max="10" step="1" value="${cur || 5}" aria-label="시뮬레이션 소리 ${s.k} 유사도"><input type="number" min="1" max="10" step="1" inputmode="numeric" value="${cur || ""}" placeholder="–"><span class="val">${cur ? cur + " 점" : "미평가"}</span></div>
       <div class="scale-labels"><span>1 = 전혀 다름</span><span>10 = 똑같음</span></div></div>`);
     d.querySelector(".play").onclick = e => play(e.currentTarget, s.files[nhSide()], S.nhVol);
