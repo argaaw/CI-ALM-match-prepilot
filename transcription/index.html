@@ -75,8 +75,8 @@ const audio = new Audio(); audio.preload = "auto";
 function playOnce(src, btn, onEnd) {
   btn.disabled = true; btn.classList.add("on"); const t0 = now(); let started = false;
   audio.onplaying = () => { started = true; }; audio.onended = () => { btn.classList.remove("on"); onEnd({ t_play: t0, t_end: now(), ok: true }); };
-  audio.onerror = () => { btn.disabled = false; btn.classList.remove("on"); btn.textContent = "재생이 안 되었습니다. 다시 누르세요"; };
-  audio.src = src; audio.currentTime = 0; audio.play().catch(() => { btn.disabled = false; btn.classList.remove("on"); btn.textContent = "재생이 안 되었습니다. 다시 누르세요"; });
+  audio.onerror = () => { btn.disabled = false; btn.classList.remove("on"); btn.textContent = "재생이 되지 않았습니다. 다시 눌러 주세요"; };
+  audio.src = src; audio.currentTime = 0; audio.play().catch(() => { btn.disabled = false; btn.classList.remove("on"); btn.textContent = "재생이 되지 않았습니다. 다시 눌러 주세요"; });
 }
 
 function render() {
@@ -90,8 +90,8 @@ function welcome() {
     <div class="card"><p>한국어 노래의 가사 한 줄을 인공와우로 듣고, 들린 대로 적어 주시는 활동입니다. 약 30분 걸립니다.</p>
     <p>연구용 프로그램을 개발하기 위한 비공개 테스트입니다. 정답을 맞히는 시험이 아니니 들리는 만큼만 적어 주시면 됩니다.</p>
     <p class="note">진행 방법에서 이해되지 않는 부분이 있으면 언제든 담당 연구원에게 물어봐 주세요.</p>
-    <p class="muted">중간에 창을 닫아도 같은 휴대폰에서 다시 열면 이어서 할 수 있습니다.</p>
-    <label for="pid"><b>참가자 코드</b> <span class="muted">(연구자에게 받은 코드)</span></label>
+    <p class="muted">중간에 창을 닫으셔도 같은 휴대폰에서 다시 여시면 이어서 하실 수 있습니다.</p>
+    <label for="pid"><b>참가자 코드</b> <span class="muted">(담당 연구원에게 받으신 코드)</span></label>
     <input type="text" id="pid" autocomplete="off" autocapitalize="characters" style="margin-top:8px" value="${esc(S.pid)}" placeholder="예: A1"></div>
     <button class="primary" id="go">시작하기</button></div>`);
   c.querySelector("#go").onclick = () => { const v = c.querySelector("#pid").value.trim(); if (!v) { c.querySelector("#pid").focus(); return; }
@@ -103,12 +103,12 @@ function setup() {
   const c = el(`<div><h1>듣기 준비</h1>
     <div class="card"><ol>
       <li>조용한 곳에 앉아 주세요.</li>
-      <li>휴대폰 소리를 <b>인공와우로 바로 연결</b>(블루투스)해 주세요. 소리는 <b>인공와우로만</b> 듣고, 반대쪽 귀로는 듣지 않습니다.</li>
-      <li>아래 <b>확인용 소리</b>를 듣고 휴대폰 볼륨을 <b>편안하게 충분히 들리는 크기</b>로 맞춘 뒤, 끝날 때까지 바꾸지 마세요.</li></ol>
+      <li>휴대폰 소리를 <b>인공와우로 바로 연결</b>(블루투스)해 주세요. 소리는 <b>인공와우로만</b> 들으시고, 반대쪽 귀로는 듣지 않습니다.</li>
+      <li>아래 <b>확인용 소리</b>를 들으시면서 휴대폰 볼륨을 <b>편안하게 충분히 들리는 크기</b>로 맞춰 주세요. 맞추신 볼륨은 끝날 때까지 바꾸지 말아 주세요.</li></ol>
     <button class="play" id="tp">▶ 확인용 소리 듣기</button></div>
-    <div class="card"><h2>인공와우로 소리가 들렸나요?</h2><div class="choices" id="q1"><button data-v="yes">들렸다</button><button data-v="no">안 들렸다</button></div></div>
-    <div class="card"><h2>인공와우 반대쪽 귀(인공와우를 하지 않은 귀)에서도 소리가 들렸나요?</h2><p class="muted">이 활동에서는 소리를 <b>인공와우로만</b> 들어야 합니다. 반대쪽 귀로는 들리지 않아야 합니다.</p><div class="choices" id="q2"><button data-v="no">반대쪽 귀로는 안 들렸다</button><button data-v="yes">반대쪽 귀로도 들렸다</button></div>
-    <p class="warn" id="w2" hidden>반대쪽 귀로 들렸다면 휴대폰 스피커에서 소리가 나고 있는 것입니다. 블루투스 연결을 다시 확인한 뒤 확인용 소리를 다시 들어 주세요. 잘 안 되면 담당 연구원에게 물어봐 주세요.</p></div>
+    <div class="card"><h2>인공와우로 소리가 들리셨나요?</h2><div class="choices" id="q1"><button data-v="yes">들렸습니다</button><button data-v="no">안 들렸습니다</button></div></div>
+    <div class="card"><h2>인공와우 반대쪽 귀(인공와우를 하지 않은 귀)에서도 소리가 들리셨나요?</h2><p class="muted">이 활동에서는 소리를 <b>인공와우로만</b> 들어야 합니다. 반대쪽 귀로는 들리지 않아야 합니다.</p><div class="choices" id="q2"><button data-v="no">반대쪽 귀로는 안 들렸습니다</button><button data-v="yes">반대쪽 귀로도 들렸습니다</button></div>
+    <p class="warn" id="w2" hidden>반대쪽 귀로 들리셨다면 휴대폰 스피커에서 소리가 나고 있는 것입니다. 블루투스 연결을 다시 확인하신 뒤 확인용 소리를 다시 들어 주세요. 잘 안 되시면 담당 연구원에게 물어봐 주세요.</p></div>
     <button class="primary" id="go" disabled>다음</button></div>`);
   const tp = c.querySelector("#tp");
   tp.onclick = () => playOnce(CFG.test.src, tp, () => { tp.disabled = false; tp.textContent = "▶ 확인용 소리 다시 듣기"; st.test_plays = (st.test_plays || 0) + 1; save(); });
@@ -122,10 +122,10 @@ function setup() {
 }
 function howto() {
   const c = el(`<div><h1>하는 방법</h1><div class="card"><ol class="steps">
-    <li><b>▶ 노래 듣기</b>를 누르면 노래 가사 한 줄이 나옵니다.</li>
-    <li><b>한 번 들을 때마다 바로</b> 들린 가사를 칸에 적어 주세요. 여러 번 다 들은 뒤에 한꺼번에 적는 것이 아닙니다. 확실하지 않아도 추측해서 적으면 됩니다. 맞춤법은 신경 쓰지 않아도 됩니다. 하나도 안 들렸으면 비워 두세요.</li>
-    <li>적은 다음 둘 중 하나를 누르세요.<br>· 더 들어 보고 고치고 싶으면 <b>한 번 더 듣기</b>: 다시 듣고 나서 적은 것을 고쳐 주세요.<br>· 다 적었으면 <b>다 적었어요, 다음 문제로</b></li></ol>
-    <p class="muted">한 줄은 최대 ${CFG.maxPlays}번까지 들을 수 있습니다. 먼저 연습 문제 ${CFG.practice.length}개를 해 봅니다. 연습 문제는 끝나면 정답을 보여 드립니다.</p>
+    <li><b>▶ 노래 듣기</b>를 누르시면 노래 가사 한 줄이 나옵니다.</li>
+    <li><b>한 번 들을 때마다 바로</b> 들린 가사를 칸에 적어 주세요. 여러 번 다 들은 뒤에 한꺼번에 적는 것이 아닙니다. 확실하지 않으셔도 추측해서 적어 주시면 됩니다. 맞춤법은 신경 쓰지 않으셔도 됩니다. 하나도 안 들리셨으면 비워 두세요.</li>
+    <li>적으신 다음 둘 중 하나를 눌러 주세요.<br>· 더 들어 보고 고치고 싶으시면 <b>한 번 더 듣기</b>: 다시 들으신 뒤 적은 것을 고쳐 주세요.<br>· 다 적으셨으면 <b>다 적었어요, 다음 문제로</b></li></ol>
+    <p class="muted">한 줄은 최대 ${CFG.maxPlays}번까지 들으실 수 있습니다. 먼저 연습 문제 ${CFG.practice.length}개를 해 보겠습니다. 연습 문제는 끝나면 정답을 보여 드립니다.</p>
     <p class="note">이해되지 않는 부분이 있으면 시작하기 전에 담당 연구원에게 물어봐 주세요.</p></div>
     <button class="primary" id="go">연습 시작</button></div>`);
   c.querySelector("#go").onclick = () => { S.step = 3; save(); render(); }; return c;
@@ -141,19 +141,19 @@ function itemCard(it, label, onDone, feedback) {
   const finishItem = reason => { r.done = reason; r.t_done = now(); save(); saveItem(it.id); if (feedback) showFeedback(); else onDone(); };
   function showFeedback() {
     const mine = r.attempts.length ? (r.attempts[r.attempts.length - 1].text || "(비워 둠)") : "";
-    body.innerHTML = ""; body.appendChild(el(`<div><p>정답 가사</p><div class="answer">${esc(it.ref)}</div><p class="muted">내가 적은 것: ${esc(mine)}</p><button class="primary big" id="nx">다음</button></div>`));
+    body.innerHTML = ""; body.appendChild(el(`<div><p>정답 가사</p><div class="answer">${esc(it.ref)}</div><p class="muted">적으신 것: ${esc(mine)}</p><button class="primary big" id="nx">다음</button></div>`));
     body.querySelector("#nx").onclick = onDone;
   }
   if (r.done) { if (feedback) { showFeedback(); return c; } setTimeout(onDone, 0); return el(`<div></div>`); }
   if (playsDone === 0) {                                        // first listen
-    body.appendChild(el(`<p class="lab">한 번 듣고 바로 적습니다.</p>`));
+    body.appendChild(el(`<p class="lab">한 번 들으시고 바로 적어 주세요.</p>`));
     const b = el(`<button class="play">▶ 노래 듣기</button>`); body.appendChild(b);
     b.onclick = () => { b.textContent = "노래가 나오는 중…"; playOnce(it.src, b, t => { r.pending = t; save(); saveItem(it.id); render(); }); };
     return c;
   }
   const ta = el(`<textarea aria-label="들린 가사" placeholder="들린 가사를 적어 주세요"></textarea>`);
   ta.value = last ? last.text : "";
-  body.appendChild(el(`<p class="lab">${k === 0 ? "방금 들은 가사를 지금 적어 주세요." : "방금 다시 들은 대로 적은 것을 고쳐 주세요."} <span class="muted">하나도 안 들렸으면 비워 두세요.</span></p>`)); body.appendChild(ta);
+  body.appendChild(el(`<p class="lab">${k === 0 ? "방금 들으신 가사를 지금 적어 주세요." : "방금 다시 들으신 대로 적은 것을 고쳐 주세요."} <span class="muted">하나도 안 들리셨으면 비워 두세요.</span></p>`)); body.appendChild(ta);
   const left = CFG.maxPlays - playsDone;
   const again = el(`<button class="play big">▶ 한 번 더 듣기 <span class="sub">(남은 횟수 ${left}번)</span></button>`);
   const next = el(`<button class="primary big">다 적었어요, 다음 문제로 →</button>`);
@@ -165,7 +165,7 @@ function itemCard(it, label, onDone, feedback) {
     playOnce(it.src, again, t => { r.pending = t; save(); saveItem(it.id); render(); }); };
   if (!r.pending) { next.onclick = () => finishItem("complete"); }   // reload after a committed replay: allow listening or moving on
   const box = el(`<div class="stack"></div>`);
-  if (left > 0) box.appendChild(again); else box.appendChild(el(`<p class="muted">${CFG.maxPlays}번을 모두 들었습니다.</p>`));
+  if (left > 0) box.appendChild(again); else box.appendChild(el(`<p class="muted">${CFG.maxPlays}번을 모두 들으셨습니다.</p>`));
   box.appendChild(next); body.appendChild(box);
   return c;
 }
@@ -177,7 +177,7 @@ function practiceScreen() {
 }
 function itemScreen() {
   if (S.idx === 0 && !S.rec[S.order[0]] && !S.shownStart) {
-    const c = el(`<div><h1>본 문제</h1><div class="card"><p>이제 본 문제 ${CFG.items.length}개입니다. 연습과 같은 방법으로 하시면 되고, 정답은 보여 드리지 않습니다.</p><p class="muted">중간에 쉬고 싶으면 문제와 문제 사이에서 쉬어 주세요.</p></div><button class="primary" id="go">시작</button></div>`);
+    const c = el(`<div><h1>본 문제</h1><div class="card"><p>이제 본 문제 ${CFG.items.length}개입니다. 연습과 같은 방법으로 하시면 되고, 정답은 보여 드리지 않습니다.</p><p class="muted">중간에 쉬고 싶으시면 문제와 문제 사이에서 쉬어 주세요.</p></div><button class="primary" id="go">시작</button></div>`);
     c.querySelector("#go").onclick = () => { S.shownStart = true; save(); render(); }; return c;
   }
   const id = S.order[S.idx]; if (!id) { S.step = 5; save(); return finish(); }
@@ -188,15 +188,15 @@ function itemScreen() {
   return c;
 }
 function finish() {
-  const c = el(`<div><h1>끝났습니다</h1><div class="card"><p>수고하셨습니다. 마지막으로, 어려웠던 점이나 하고 싶은 말이 있으면 적어 주세요(선택).</p>
+  const c = el(`<div><h1>모두 마치셨습니다</h1><div class="card"><p>수고하셨습니다. 마지막으로, 어려우셨던 점이나 하고 싶으신 말씀이 있으면 적어 주세요(선택).</p>
     <textarea id="note" aria-label="의견"></textarea></div><div class="card" id="sb"></div></div>`);
   const ta = c.querySelector("#note"); ta.value = S.note || ""; ta.oninput = () => { S.note = ta.value; save(); };
   const sb = c.querySelector("#sb");
-  const st = el(`<p class="muted" style="margin-top:10px">${S.submittedAt ? "제출됨: " + new Date(S.submittedAt).toLocaleString("ko-KR") : "아직 제출하지 않음"}</p>`);
+  const st = el(`<p class="muted" style="margin-top:10px">${S.submittedAt ? "제출됨: " + new Date(S.submittedAt).toLocaleString("ko-KR") : "아직 제출하지 않으셨습니다"}</p>`);
   const b = el(`<button class="primary">제출하기</button>`);
   b.onclick = async () => { b.disabled = true; b.textContent = "제출 중…";
     try { await saveMeta(); for (const id of Object.keys(S.rec)) await saveItem(id); const j = await api({ action: "submit" }); S.submittedAt = j ? j.submitted_at : now(); save(); st.textContent = "제출됨: " + new Date(S.submittedAt).toLocaleString("ko-KR"); b.textContent = "제출되었습니다"; }
-    catch (e) { b.disabled = false; b.textContent = "다시 제출하기"; st.textContent = "제출 실패: 인터넷 연결을 확인한 뒤 다시 눌러 주세요."; } };
+    catch (e) { b.disabled = false; b.textContent = "다시 제출하기"; st.textContent = "제출되지 않았습니다. 인터넷 연결을 확인하신 뒤 다시 눌러 주세요."; } };
   sb.appendChild(b); sb.appendChild(st);
   return c;
 }
