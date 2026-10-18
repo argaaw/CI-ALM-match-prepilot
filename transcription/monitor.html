@@ -1,0 +1,22 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>받아쓰기 사전 시험 모니터</title>
+<style>:root{color-scheme:light dark;--line:#ccc}body{font:15px -apple-system,system-ui,"Noto Sans KR",sans-serif;margin:0;padding:16px;max-width:900px;margin:auto}
+input,button{font:inherit;padding:8px 10px}table{border-collapse:collapse;width:100%;margin-top:12px}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{white-space:nowrap}.m{opacity:.7;font-size:.9em}</style></head><body>
+<h1 style="font-size:1.3rem">받아쓰기 사전 시험 모니터</h1>
+<p class="m">참가자 코드를 넣으면 5초마다 서버 기록을 불러옵니다(정답 가사는 표시하지 않음; 채점은 내보내기 스크립트로).</p>
+<input id="pid" placeholder="참가자 코드"> <button id="go">보기</button> <span id="st" class="m"></span>
+<div id="meta" class="m" style="margin-top:10px"></div><table><thead><tr><th>순서</th><th>문항</th><th>시도</th><th>응답(시도별)</th><th>종료</th></tr></thead><tbody id="tb"></tbody></table>
+<script>
+const API="https://zwmdukuecvntquygsksv.supabase.co/functions/v1/human-evaluation", EVAL="ssdci-transcription-pilot-001"; let timer=null;
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+async function pull(pid){ try{ const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({evaluation_id:EVAL,participant_id:"ssdci-"+pid.toLowerCase(),action:"resume"})});
+  const j=await r.json(); const rows=[]; let meta=null;
+  (j.answers||[]).forEach(a=>{ if(a.sample_id==="meta"){meta=a;return;} try{const x=JSON.parse(a.comment||"{}"); rows.push(x);}catch(e){} });
+  rows.sort((a,b)=>(a.pos??99)-(b.pos??99)||String(a.id).localeCompare(b.id));
+  document.getElementById("tb").innerHTML=rows.map(x=>`<tr><td>${x.pos??"연습"}</td><td>${esc(x.id)}</td><td>${(x.attempts||[]).length}${x.pending?" (재생 후 응답 대기)":""}</td><td>${(x.attempts||[]).map(t=>`${t.k}. ${t.unheard?"(못 들음)":esc(t.text)}`).join("<br>")}</td><td>${x.done||""}</td></tr>`).join("");
+  document.getElementById("meta").textContent=meta?("설정: "+(meta.comment||"")+" | "+(meta.selected_options||[]).join(" | ")):"";
+  document.getElementById("st").textContent="갱신 "+new Date().toLocaleTimeString("ko-KR")+(j.submitted_at?" · 제출됨":"");
+ }catch(e){document.getElementById("st").textContent="불러오기 실패";} }
+document.getElementById("go").onclick=()=>{const p=document.getElementById("pid").value.trim(); if(!p)return; clearInterval(timer); pull(p); timer=setInterval(()=>pull(p),5000);};
+</script></body></html>
