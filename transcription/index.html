@@ -103,12 +103,12 @@ function setup() {
   const c = el(`<div><h1>듣기 준비</h1>
     <div class="card"><ol>
       <li>조용한 곳에 앉아 주세요.</li>
-      <li>휴대폰 소리를 <b>인공와우로 바로 연결</b>(블루투스)해 주세요.</li>
+      <li>휴대폰 소리를 <b>인공와우로 바로 연결</b>(블루투스)해 주세요. 소리는 <b>인공와우로만</b> 듣고, 반대쪽 귀로는 듣지 않습니다.</li>
       <li>아래 <b>확인용 소리</b>를 듣고 휴대폰 볼륨을 <b>편안하게 충분히 들리는 크기</b>로 맞춘 뒤, 끝날 때까지 바꾸지 마세요.</li></ol>
     <button class="play" id="tp">▶ 확인용 소리 듣기</button></div>
     <div class="card"><h2>인공와우로 소리가 들렸나요?</h2><div class="choices" id="q1"><button data-v="yes">들렸다</button><button data-v="no">안 들렸다</button></div></div>
-    <div class="card"><h2>휴대폰 스피커에서도 소리가 났나요?</h2><p class="muted">인공와우 반대쪽 귀로도 소리가 들렸다면 휴대폰 스피커에서 소리가 난 것입니다.</p><div class="choices" id="q2"><button data-v="no">나지 않았다</button><button data-v="yes">났다</button></div>
-    <p class="warn" id="w2" hidden>소리는 인공와우로만 들려야 합니다. 블루투스 연결을 다시 확인한 뒤 확인용 소리를 다시 들어 주세요. 잘 안 되면 담당 연구원에게 물어봐 주세요.</p></div>
+    <div class="card"><h2>인공와우 반대쪽 귀(인공와우를 하지 않은 귀)에서도 소리가 들렸나요?</h2><p class="muted">이 활동에서는 소리를 <b>인공와우로만</b> 들어야 합니다. 반대쪽 귀로는 들리지 않아야 합니다.</p><div class="choices" id="q2"><button data-v="no">반대쪽 귀로는 안 들렸다</button><button data-v="yes">반대쪽 귀로도 들렸다</button></div>
+    <p class="warn" id="w2" hidden>반대쪽 귀로 들렸다면 휴대폰 스피커에서 소리가 나고 있는 것입니다. 블루투스 연결을 다시 확인한 뒤 확인용 소리를 다시 들어 주세요. 잘 안 되면 담당 연구원에게 물어봐 주세요.</p></div>
     <button class="primary" id="go" disabled>다음</button></div>`);
   const tp = c.querySelector("#tp");
   tp.onclick = () => playOnce(CFG.test.src, tp, () => { tp.disabled = false; tp.textContent = "▶ 확인용 소리 다시 듣기"; st.test_plays = (st.test_plays || 0) + 1; save(); });
