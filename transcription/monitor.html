@@ -4,8 +4,8 @@
 input,button{font:inherit;padding:8px 10px}table{border-collapse:collapse;width:100%;margin-top:12px}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 th{white-space:nowrap}.m{opacity:.7;font-size:.9em}</style></head><body>
 <h1 style="font-size:1.3rem">노래 가사 받아 적기 테스트 모니터</h1>
-<p class="m">참가자 코드를 넣으면 5초마다 서버 기록을 불러옵니다(정답 가사는 표시하지 않음; 채점은 내보내기 스크립트로).</p>
-<input id="pid" placeholder="참가자 코드"> <button id="go">보기</button> <span id="st" class="m"></span>
+<p class="m">휴대폰 번호 뒷자리 4자리를 넣으면 5초마다 서버 기록을 불러옵니다(정답 가사는 표시하지 않음; 채점은 내보내기 스크립트로).</p>
+<input id="pid" placeholder="뒷자리 4자리"> <button id="go">보기</button> <span id="st" class="m"></span>
 <div id="meta" class="m" style="margin-top:10px"></div><table><thead><tr><th>순서</th><th>문항</th><th>시도</th><th>응답(시도별)</th><th>종료</th></tr></thead><tbody id="tb"></tbody></table>
 <script>
 const API="https://zwmdukuecvntquygsksv.supabase.co/functions/v1/human-evaluation", EVAL="ssdci-transcription-pilot-001"; let timer=null;

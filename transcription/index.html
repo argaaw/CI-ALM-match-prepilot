@@ -91,10 +91,11 @@ function welcome() {
     <p>연구용 프로그램을 개발하기 위한 비공개 테스트입니다. 정답을 맞히는 시험이 아니니 들리는 만큼만 적어 주시면 됩니다.</p>
     <p class="note">진행 방법에서 이해되지 않는 부분이 있으면 언제든 담당 연구원에게 물어봐 주세요.</p>
     <p class="muted">중간에 창을 닫으셔도 같은 휴대폰에서 다시 여시면 이어서 하실 수 있습니다.</p>
-    <label for="pid"><b>참가자 코드</b> <span class="muted">(담당 연구원에게 받으신 코드)</span></label>
-    <input type="text" id="pid" autocomplete="off" autocapitalize="characters" style="margin-top:8px" value="${esc(S.pid)}" placeholder="예: A1"></div>
+    <label for="pid"><b>휴대폰 번호 뒷자리 4자리</b>를 입력해 주세요.</label>
+    <input type="text" id="pid" inputmode="numeric" autocomplete="off" maxlength="4" style="margin-top:8px" value="${esc(S.pid)}" placeholder="예: 1234">
+    <p class="warn" id="pw" hidden>숫자 4자리를 입력해 주세요.</p></div>
     <button class="primary" id="go">시작하기</button></div>`);
-  c.querySelector("#go").onclick = () => { const v = c.querySelector("#pid").value.trim(); if (!v) { c.querySelector("#pid").focus(); return; }
+  c.querySelector("#go").onclick = () => { const v = c.querySelector("#pid").value.trim(); if (!/^[0-9]{4}$/.test(v) && !/^t(est)?$/i.test(v)) { c.querySelector("#pw").hidden = false; c.querySelector("#pid").focus(); return; }
     S.pid = v; if (!S.order.length) S.order = seededOrder(v.toUpperCase()); if (!S.started) S.started = now(); S.step = 1; save(); resume(); saveMeta(); render(); };
   return c;
 }
