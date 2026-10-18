@@ -123,8 +123,8 @@ function setup() {
 function howto() {
   const c = el(`<div><h1>하는 방법</h1><div class="card"><ol class="steps">
     <li><b>▶ 노래 듣기</b>를 누르면 노래 가사 한 줄이 나옵니다.</li>
-    <li>들린 가사를 칸에 적어 주세요. 확실하지 않아도 추측해서 적으면 됩니다. 맞춤법은 신경 쓰지 않아도 됩니다. 하나도 안 들렸으면 비워 두세요.</li>
-    <li>그다음 둘 중 하나를 누르세요.<br>· 더 들어 보고 고치고 싶으면 <b>한 번 더 듣기</b><br>· 다 적었으면 <b>다 적었어요, 다음 문제로</b></li></ol>
+    <li><b>한 번 들을 때마다 바로</b> 들린 가사를 칸에 적어 주세요. 여러 번 다 들은 뒤에 한꺼번에 적는 것이 아닙니다. 확실하지 않아도 추측해서 적으면 됩니다. 맞춤법은 신경 쓰지 않아도 됩니다. 하나도 안 들렸으면 비워 두세요.</li>
+    <li>적은 다음 둘 중 하나를 누르세요.<br>· 더 들어 보고 고치고 싶으면 <b>한 번 더 듣기</b>: 다시 듣고 나서 적은 것을 고쳐 주세요.<br>· 다 적었으면 <b>다 적었어요, 다음 문제로</b></li></ol>
     <p class="muted">한 줄은 최대 ${CFG.maxPlays}번까지 들을 수 있습니다. 먼저 연습 문제 ${CFG.practice.length}개를 해 봅니다. 연습 문제는 끝나면 정답을 보여 드립니다.</p>
     <p class="note">이해되지 않는 부분이 있으면 시작하기 전에 담당 연구원에게 물어봐 주세요.</p></div>
     <button class="primary" id="go">연습 시작</button></div>`);
@@ -146,13 +146,14 @@ function itemCard(it, label, onDone, feedback) {
   }
   if (r.done) { if (feedback) { showFeedback(); return c; } setTimeout(onDone, 0); return el(`<div></div>`); }
   if (playsDone === 0) {                                        // first listen
+    body.appendChild(el(`<p class="lab">한 번 듣고 바로 적습니다.</p>`));
     const b = el(`<button class="play">▶ 노래 듣기</button>`); body.appendChild(b);
     b.onclick = () => { b.textContent = "노래가 나오는 중…"; playOnce(it.src, b, t => { r.pending = t; save(); saveItem(it.id); render(); }); };
     return c;
   }
   const ta = el(`<textarea aria-label="들린 가사" placeholder="들린 가사를 적어 주세요"></textarea>`);
   ta.value = last ? last.text : "";
-  body.appendChild(el(`<p class="lab">들린 가사를 적어 주세요. 하나도 안 들렸으면 비워 두세요.</p>`)); body.appendChild(ta);
+  body.appendChild(el(`<p class="lab">${k === 0 ? "방금 들은 가사를 지금 적어 주세요." : "방금 다시 들은 대로 적은 것을 고쳐 주세요."} <span class="muted">하나도 안 들렸으면 비워 두세요.</span></p>`)); body.appendChild(ta);
   const left = CFG.maxPlays - playsDone;
   const again = el(`<button class="play big">▶ 한 번 더 듣기 <span class="sub">(남은 횟수 ${left}번)</span></button>`);
   const next = el(`<button class="primary big">다 적었어요, 다음 문제로 →</button>`);
