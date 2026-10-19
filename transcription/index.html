@@ -48,6 +48,7 @@ textarea.locked { background:var(--soft); color:var(--muted); }
 <script>
 const CFG = {"items": [{"id": "p01", "src": "audio/p01.mp3"}, {"id": "p02", "src": "audio/p02.mp3"}, {"id": "p03", "src": "audio/p03.mp3"}, {"id": "p04", "src": "audio/p04.mp3"}, {"id": "p05", "src": "audio/p05.mp3"}, {"id": "p06", "src": "audio/p06.mp3"}, {"id": "p07", "src": "audio/p07.mp3"}, {"id": "p08", "src": "audio/p08.mp3"}, {"id": "p09", "src": "audio/p09.mp3"}, {"id": "p10", "src": "audio/p10.mp3"}, {"id": "p11", "src": "audio/p11.mp3"}, {"id": "p12", "src": "audio/p12.mp3"}, {"id": "p13", "src": "audio/p13.mp3"}, {"id": "p14", "src": "audio/p14.mp3"}, {"id": "p15", "src": "audio/p15.mp3"}], "practice": [{"id": "x1", "src": "audio/x1.mp3", "ref": "뜨거운 차를 따라 내려간 그 향기가"}, {"id": "x2", "src": "audio/x2.mp3", "ref": "유채꽃처럼 살짝 기울어진 젓가락 끝"}], "test": {"id": "t1", "src": "audio/t1.mp3"}, "maxPlays": 5, "api": "https://zwmdukuecvntquygsksv.supabase.co/functions/v1/human-evaluation", "evalId": "ssdci-transcription-pilot-001"};
 const KEY = "ssdci-transcription-pilot-v1";
+if (/[?&]reset\b/.test(location.search)) { try { localStorage.removeItem(KEY); } catch (e) {} history.replaceState(null, "", location.pathname); }   // testing: ?reset clears this browser's progress
 let S = { step: 0, pid: "", setup: {}, order: [], idx: 0, prac: 0, rec: {}, note: "", started: null, submittedAt: null };
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) S = Object.assign(S, s); } catch (e) {}
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
