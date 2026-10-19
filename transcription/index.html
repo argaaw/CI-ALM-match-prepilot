@@ -125,7 +125,7 @@ function setup() {
 }
 const STEPS = () => `<ol class="steps">
     <li><b>▶ 노래 듣기</b>를 누르시면 노래 가사 한 줄이 나옵니다.</li>
-    <li><b>한 번 들을 때마다 바로</b> 들린 가사를 칸에 적어 주세요. 여러 번 다 들은 뒤에 한꺼번에 적는 것이 아닙니다. 확실하지 않으셔도 추측해서 적어 주시면 됩니다. 맞춤법은 신경 쓰지 않으셔도 됩니다. 하나도 안 들리셨으면 비워 두세요.</li>
+    <li><b>한 번 들을 때마다 바로</b> 들린 가사를 칸에 적어 주세요. 여러 번 다 들은 뒤에 한꺼번에 적는 것이 아닙니다. <b>틀린 것 같거나 말이 어색해도 들리는 대로 적어 주세요.</b> 한두 단어만 들려도 적어 주시면 됩니다. 맞춤법은 신경 쓰지 않으셔도 됩니다. 정말 아무것도 안 들리셨을 때만 비워 두세요.</li>
     <li>적으신 다음 둘 중 하나를 눌러 주세요.<br>· 더 들어 보고 고치고 싶으시면 <b>한 번 더 듣기</b>: 다시 들으신 뒤 적은 것을 고쳐 주세요.<br>· 더 들을 필요도, 고칠 것도 없으시면 <b>이 답으로 끝내고 다음 문제로</b></li></ol>`;
 function howto() {
   const c = el(`<div><h1>하는 방법</h1><div class="card">${STEPS()}
@@ -167,9 +167,9 @@ function itemCard(it, label, onDone, feedback) {
     b.onclick = () => { b.textContent = "노래가 나오는 중…"; playOnce(it.src, b, t => { r.pending = t; save(); saveItem(it.id); render(); }); };
     return c;
   }
-  const ta = el(`<textarea aria-label="들린 가사" placeholder="들린 가사를 적어 주세요"></textarea>`);
+  const ta = el(`<textarea aria-label="들린 가사" placeholder="들리는 대로 적어 주세요 (틀려도 괜찮아요)"></textarea>`);
   ta.value = last ? last.text : "";
-  body.appendChild(el(`<p class="lab">${k === 0 ? "방금 들으신 가사를 지금 적어 주세요." : "방금 다시 들으신 대로 적은 것을 고쳐 주세요."} <span class="muted">하나도 안 들리셨으면 비워 두세요.</span></p>`)); body.appendChild(ta);
+  body.appendChild(el(`<p class="lab">${k === 0 ? "방금 들으신 가사를 지금 적어 주세요." : "방금 다시 들으신 대로 적은 것을 고쳐 주세요."} <br><span class="muted">틀린 것 같거나 말이 어색해도 들리는 대로 적어 주세요. 한두 단어만 들려도 괜찮습니다. 정말 아무것도 안 들리셨을 때만 비워 두세요.</span></p>`)); body.appendChild(ta);
   const left = CFG.maxPlays - playsDone;
   const again = el(`<button class="play big">▶ 한 번 더 듣기 <span class="sub">(남은 횟수 ${left}번)</span></button>`);
   const next = el(`<button class="primary big">이 답으로 끝내고 다음 문제로 →${left > 0 ? `<span class="sub">더 들을 필요도, 고칠 것도 없을 때</span>` : ""}</button>`);
