@@ -33,6 +33,16 @@ textarea { min-height:110px; font-size:1.25rem; }
 .answer { background:var(--soft); border-radius:10px; padding:10px 12px; margin:10px 0; font-weight:500; }
 .choices { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .choices button[aria-pressed="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
 ol { padding-left:1.3em; margin:0 0 12px; } li { margin-bottom:6px; }
+ul.tips { padding-left:1.1em; margin:6px 0 12px; } ul.tips li { margin-bottom:4px; }
+.tipbox { font-size:.95rem; color:var(--muted); } .tipbox ul.tips { margin:0 0 8px; }
+textarea.locked { background:var(--soft); color:var(--muted); }
+.choose { font-size:.98rem; } .choose .lab { margin-top:4px; } .choose.off { opacity:.55; }
+.rule { margin:0 0 12px; }
+.rate { margin:14px 0 18px; } .rate .q { font-weight:500; margin-bottom:8px; }
+.scale { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:6px; }
+.scale button { min-height:52px; padding:0; font-size:1.15rem; font-weight:700; }
+.scale button[aria-pressed="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.ends { display:flex; justify-content:space-between; font-size:.85rem; color:var(--muted); margin-top:4px; }
 </style>
 <div class="wrap" id="app" aria-live="polite"></div>
 <script>
@@ -123,13 +133,22 @@ function setup() {
   go.onclick = () => { S.step = 2; save(); saveMeta(); render(); };
   return c;
 }
-const STEPS = () => `<ol class="steps">
-    <li><b>▶ 노래 듣기</b>를 누르시면 노래 가사 한 줄이 나옵니다.</li>
-    <li><b>한 번 들을 때마다 바로</b> 들린 가사를 칸에 적어 주세요. 여러 번 다 들은 뒤에 한꺼번에 적는 것이 아닙니다. <b>틀린 것 같거나 말이 어색해도 들리는 대로 적어 주세요.</b> 한두 단어만 들려도 적어 주시면 됩니다. 맞춤법은 신경 쓰지 않으셔도 됩니다. 정말 아무것도 안 들리셨을 때만 비워 두세요.</li>
-    <li>적으신 다음 둘 중 하나를 눌러 주세요.<br>· 더 들어 보고 고치고 싶으시면 <b>한 번 더 듣기</b>: 다시 들으신 뒤 적은 것을 고쳐 주세요.<br>· 더 들을 필요도, 고칠 것도 없으시면 <b>이 답으로 끝내고 다음 문제로</b></li></ol>`;
+const WRITE_TIPS = `<ul class="tips">
+      <li>여러 번 들은 뒤 한꺼번에 적는 것이 아닙니다. <b>틀린 것 같거나 말이 어색해도, 들리는 그대로 적어 주세요.</b></li>
+      <li>한두 단어만 들려도, 들리신 단어만 적어 주시면 됩니다.</li>
+      <li>맞춤법은 신경 쓰지 않으셔도 됩니다.</li>
+      <li>정말 아무것도 들리지 않았을 때만 칸을 비워 두세요.</li></ul>`;
+const STEPS = first => `<ol class="steps">
+    <li>${first ? "다음 페이지에서 " : ""}<b>【▶ 노래 듣기】</b> 버튼을 누르면 노래 한 소절이 재생됩니다.</li>
+    <li>한 번 들을 때마다, 그때 들린 가사를 바로 칸에 적어 주세요.${WRITE_TIPS}</li></ol>`;
+const PLAY_RULE = `한 소절은 최대 ${CFG.maxPlays}번까지 들을 수 있습니다. ${CFG.maxPlays}번째 듣고 나면 자동으로 다음 문제로 넘어갑니다.`;
+const BUTTON_GUIDE = `<ul class="tips">
+      <li><b>【한 번 더 듣기】</b> 버튼 — 더 들어 보고 고치고 싶을 때. 다시 들으신 뒤, 적은 내용을 고쳐 주세요.</li>
+      <li><b>【이 답으로 끝내고 다음으로】</b> 버튼 — 더 들을 필요도, 고칠 것도 없을 때.</li></ul>`;
 function howto() {
-  const c = el(`<div><h1>하는 방법</h1><div class="card">${STEPS()}
-    <p class="muted">한 줄은 최대 ${CFG.maxPlays}번까지 들으실 수 있습니다. 먼저 연습 문제 ${CFG.practice.length}개를 해 보겠습니다. 연습 문제는 끝나면 정답을 보여 드립니다.</p>
+  const c = el(`<div><h1>하는 방법</h1><div class="card">${STEPS(true)}
+    <p>먼저 연습 문제 ${CFG.practice.length}개를 풀어 보겠습니다.</p>
+    <ul class="tips"><li>연습 문제는 끝나면 정답을 보여 드립니다. 본 문제에서는 정답을 보여 드리지 않습니다.</li></ul>
     <p class="note">이해되지 않는 부분이 있으면 시작하기 전에 담당 연구원에게 물어봐 주세요.</p></div>
     <button class="primary" id="go">연습 시작</button></div>`);
   c.querySelector("#go").onclick = () => { S.step = 3; save(); render(); }; return c;
@@ -138,51 +157,82 @@ function helpButton() {                              // reopen the instructions 
   const b = el(`<button class="help">? 하는 방법 다시 보기</button>`);
   b.onclick = () => {
     const id = S.step === 3 ? CFG.practice[S.prac]?.id : S.order[S.idx]; if (id && S.rec[id]) { S.rec[id].help = (S.rec[id].help || 0) + 1; save(); }
-    const ov = el(`<div class="overlay" role="dialog" aria-modal="true" aria-label="하는 방법"><div class="card"><h2>하는 방법</h2>${STEPS()}
-      <p class="muted">한 줄은 최대 ${CFG.maxPlays}번까지 들으실 수 있습니다.</p><p class="note">더 궁금하신 점은 담당 연구원에게 물어봐 주세요.</p>
+    const ov = el(`<div class="overlay" role="dialog" aria-modal="true" aria-label="하는 방법"><div class="card"><h2>하는 방법</h2>${STEPS(false)}
+      <p>적으신 뒤 <b>【✔ 적은 내용 저장】</b>을 누르시면, 아래 두 버튼 중 하나를 고르실 수 있습니다.</p>${BUTTON_GUIDE}
+      <p class="muted">${PLAY_RULE}</p><p class="note">더 궁금하신 점은 담당 연구원에게 물어봐 주세요.</p>
       <button class="primary big" id="cl">닫기</button></div></div>`);
     ov.querySelector("#cl").onclick = () => ov.remove(); ov.onclick = e => { if (e.target === ov) ov.remove(); };
     document.body.appendChild(ov); ov.querySelector("#cl").focus();
   };
   return b;
 }
-// one transcription item. After each play the listener edits one text box and makes ONE choice: play again or next.
+// one transcription item: play -> write -> save (the text is locked) -> then ONE choice: play again (text unlocks after the replay)
+// or end with this answer. The save after the last allowed play ends the item. Then two 7-point ratings of the sound; practice
+// items then show the target lyric.
+const RATE_Q = [["clear", "들으신 소리의 특징(음정, 악기, 가사 등)이 또렷하게 들렸다."], ["muddy", "들으신 소리가 뭉개지거나 잡음처럼 들렸다."]];
 function itemCard(it, label, onDone, feedback) {
   const r = S.rec[it.id] || (S.rec[it.id] = { id: it.id, attempts: [], t_start: now() });
   const k = r.attempts.length; const last = k ? r.attempts[k - 1] : null;
   const playsDone = k + (r.pending ? 1 : 0);
   const c = el(`<div class="card"><h2>${label}</h2><p class="muted" style="margin:0">들은 횟수 ${playsDone} / ${CFG.maxPlays}</p>
-    <div class="dots" aria-hidden="true">${Array.from({ length: CFG.maxPlays }, (_, i) => `<i class="${i < playsDone ? "on" : ""}"></i>`).join("")}</div><div id="body"></div><p class="muted" id="sync">${syncMsg}</p></div>`);
+    <div class="dots" aria-hidden="true">${Array.from({ length: CFG.maxPlays }, (_, i) => `<i class="${i < playsDone ? "on" : ""}"></i>`).join("")}</div>
+    <p class="muted rule">${PLAY_RULE}</p><div id="body"></div><p class="muted" id="sync">${syncMsg}</p></div>`);
   const body = c.querySelector("#body");
-  const finishItem = reason => { r.done = reason; r.t_done = now(); save(); saveItem(it.id); if (feedback) showFeedback(); else onDone(); };
+  const finishItem = reason => { r.done = reason; r.t_done = now(); save(); saveItem(it.id); render(); };
   function showFeedback() {
     const mine = r.attempts.length ? (r.attempts[r.attempts.length - 1].text || "(비워 둠)") : "";
-    body.innerHTML = ""; body.appendChild(el(`<div><p>정답 가사</p><div class="answer">${esc(it.ref)}</div><p class="muted">적으신 것: ${esc(mine)}</p><button class="primary big" id="nx">다음</button></div>`));
+    body.appendChild(el(`<div><p>정답 가사</p><div class="answer">${esc(it.ref)}</div><p class="muted">적으신 것: ${esc(mine)}</p><button class="primary big" id="nx">다음</button></div>`));
     body.querySelector("#nx").onclick = onDone;
   }
-  if (r.done) { if (feedback) { showFeedback(); return c; } setTimeout(onDone, 0); return el(`<div></div>`); }
+  function showRating() {                                       // after the item is finished, before any feedback
+    c.querySelector(".rule").remove(); c.querySelector(".dots").remove(); c.querySelector("p.muted").textContent = "받아 적기를 마쳤습니다.";
+    const ans = r.rating_draft || (r.rating_draft = {});
+    const box = el(`<div><p class="lab">방금 들으신 노래 소리에 대해, 아래 각 문장에 얼마나 동의하시는지 골라 주세요.</p>
+      <p class="muted">1 = 전혀 그렇지 않다, 7 = 매우 그렇다</p>
+      ${RATE_Q.map(([key, q], i) => `<div class="rate" data-k="${key}"><p class="q">${i + 1}. ${q}</p><div class="scale">${[1, 2, 3, 4, 5, 6, 7].map(v => `<button data-v="${v}" aria-pressed="${ans[key] === v}" aria-label="${v}점">${v}</button>`).join("")}</div>
+        <div class="ends"><span>전혀 그렇지 않다</span><span>매우 그렇다</span></div></div>`).join("")}
+      <button class="primary big" id="rk" disabled>다음 →</button></div>`);
+    const ok = box.querySelector("#rk"); const upd = () => { ok.disabled = !RATE_Q.every(([key]) => ans[key]); };
+    box.querySelectorAll(".rate").forEach(d => d.querySelectorAll("button").forEach(b => b.onclick = () => {
+      ans[d.dataset.k] = +b.dataset.v; d.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); save(); upd(); }));
+    upd();
+    ok.onclick = () => { r.rating = { ...ans, t: now() }; delete r.rating_draft; save(); saveItem(it.id); if (feedback) { body.innerHTML = ""; showFeedback(); } else onDone(); };
+    body.appendChild(box);
+  }
+  if (r.done) { if (!r.rating) { showRating(); return c; } if (feedback) { c.querySelector(".rule").remove(); showFeedback(); return c; } setTimeout(onDone, 0); return el(`<div></div>`); }
   if (playsDone === 0) {                                        // first listen
-    body.appendChild(el(`<p class="lab">한 번 들으시고 바로 적어 주세요.</p>`));
     const b = el(`<button class="play">▶ 노래 듣기</button>`); body.appendChild(b);
     b.onclick = () => { b.textContent = "노래가 나오는 중…"; playOnce(it.src, b, t => { r.pending = t; save(); saveItem(it.id); render(); }); };
     return c;
   }
-  const ta = el(`<textarea aria-label="들린 가사" placeholder="들리는 대로 적어 주세요 (틀려도 괜찮아요)"></textarea>`);
-  ta.value = last ? last.text : "";
-  body.appendChild(el(`<p class="lab">${k === 0 ? "방금 들으신 가사를 지금 적어 주세요." : "방금 다시 들으신 대로 적은 것을 고쳐 주세요."} <br><span class="muted">틀린 것 같거나 말이 어색해도 들리는 대로 적어 주세요. 한두 단어만 들려도 괜찮습니다. 정말 아무것도 안 들리셨을 때만 비워 두세요.</span></p>`)); body.appendChild(ta);
   const left = CFG.maxPlays - playsDone;
+  const ta = el(`<textarea aria-label="들린 가사" placeholder="들리는 대로 적어 주세요 (틀려도 괜찮아요)"></textarea>`);
+  ta.value = r.pending ? (r.draft ?? (last ? last.text : "")) : (last ? last.text : "");
+  ta.readOnly = !r.pending; if (!r.pending) ta.classList.add("locked");
+  body.appendChild(el(`<p class="lab">${r.pending ? (k === 0 ? "방금 들으신 가사를 지금 적어 주세요." : "방금 다시 들으신 대로, 적은 내용을 고쳐 주세요.") : "적으신 내용이 저장되었습니다."}</p>`));
+  if (r.pending) body.appendChild(el(`<div class="tipbox">${WRITE_TIPS}</div>`));
+  body.appendChild(ta);
+  const sv = el(`<button class="primary big"></button>`);
+  const svLabel = () => { sv.innerHTML = ta.value.trim() ? "✔ 적은 내용 저장" : "아무것도 들리지 않았어요 <span class=\"sub\">(빈칸으로 저장)</span>"; };
   const again = el(`<button class="play big">▶ 한 번 더 듣기 <span class="sub">(남은 횟수 ${left}번)</span></button>`);
-  const next = el(`<button class="primary big">이 답으로 끝내고 다음 문제로 →${left > 0 ? `<span class="sub">더 들을 필요도, 고칠 것도 없을 때</span>` : ""}</button>`);
-  const commit = action => { if (!r.pending) return; const text = ta.value.trim();
-    r.attempts.push({ k: r.attempts.length + 1, text, unheard: !text, edited: !!last && text !== (last.text || ""), action, ...r.pending, t_submit: now() });
-    delete r.pending; save(); saveItem(it.id); };
-  next.onclick = () => { commit("next"); finishItem(left <= 0 ? "max" : "complete"); };
-  again.onclick = () => { commit("replay"); next.disabled = true; again.innerHTML = "노래가 나오는 중…";
-    playOnce(it.src, again, t => { r.pending = t; save(); saveItem(it.id); render(); }); };
-  if (!r.pending) { next.onclick = () => finishItem("complete"); }   // reload after a committed replay: allow listening or moving on
+  const next = el(`<button class="primary big">이 답으로 끝내고 다음으로 →</button>`);
   const box = el(`<div class="stack"></div>`);
-  if (left > 0) box.appendChild(again); else box.appendChild(el(`<p class="muted">${CFG.maxPlays}번을 모두 들으셨습니다.</p>`));
-  box.appendChild(next); body.appendChild(box);
+  if (r.pending) {
+    svLabel(); ta.oninput = () => { r.draft = ta.value; save(); svLabel(); }; box.appendChild(sv);
+    sv.onclick = () => { const text = ta.value.trim();
+      r.attempts.push({ k: r.attempts.length + 1, text, unheard: !text, edited: !!last && text !== (last.text || ""), ...r.pending, t_submit: now() });
+      delete r.pending; delete r.draft; save(); saveItem(it.id);
+      if (left <= 0) { r.attempts[r.attempts.length - 1].action = "max"; finishItem("max"); } else render(); };
+  }
+  const guide = el(`<div class="choose"><p class="lab">${r.pending ? "저장하신 뒤에 아래 두 버튼 중 하나를 고르실 수 있습니다." : "아래 두 버튼 중 하나를 골라 주세요."}</p>${BUTTON_GUIDE}</div>`);
+  if (r.pending) { again.disabled = true; next.disabled = true; guide.classList.add("off"); }
+  again.onclick = () => { last.action = "replay"; save(); again.disabled = true; next.disabled = true; again.innerHTML = "노래가 나오는 중…";
+    playOnce(it.src, again, t => { r.pending = t; save(); saveItem(it.id); render(); }); };
+  next.onclick = () => { last.action = "next"; finishItem("complete"); };
+  if (left > 0) { box.appendChild(guide); box.appendChild(again); box.appendChild(next); }
+  else box.appendChild(el(`<p class="muted">${CFG.maxPlays}번을 모두 들으셨습니다. 저장하시면 다음으로 넘어갑니다.</p>`));
+  body.appendChild(box);
+  if (r.pending) setTimeout(() => ta.focus(), 50);
   return c;
 }
 function practiceScreen() {
@@ -193,7 +243,9 @@ function practiceScreen() {
 }
 function itemScreen() {
   if (S.idx === 0 && !S.rec[S.order[0]] && !S.shownStart) {
-    const c = el(`<div><h1>본 문제</h1><div class="card"><p>이제 본 문제 ${CFG.items.length}개입니다. 연습과 같은 방법으로 하시면 되고, 정답은 보여 드리지 않습니다.</p><p class="muted">중간에 쉬고 싶으시면 문제와 문제 사이에서 쉬어 주세요.</p></div><button class="primary" id="go">시작</button></div>`);
+    const c = el(`<div><h1>연습이 끝났습니다</h1><div class="card"><p>이제 <b>본 문제 ${CFG.items.length}개</b>를 시작합니다.</p>
+      <ul class="tips"><li>방법은 연습 문제와 같습니다.</li><li>본 문제에서는 정답을 보여 드리지 않습니다.</li><li>문제마다 받아 적기가 끝나면, 들으신 소리에 대한 질문 2개에 답해 주세요.</li></ul>
+      <p class="muted">중간에 쉬고 싶으시면 문제와 문제 사이에서 쉬어 주세요.</p></div><button class="primary" id="go">본 문제 시작</button></div>`);
     c.querySelector("#go").onclick = () => { S.shownStart = true; save(); render(); }; return c;
   }
   const id = S.order[S.idx]; if (!id) { S.step = 5; save(); return finish(); }

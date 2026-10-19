@@ -6,7 +6,7 @@ th{white-space:nowrap}.m{opacity:.7;font-size:.9em}</style></head><body>
 <h1 style="font-size:1.3rem">노래 가사 받아 적기 테스트 모니터</h1>
 <p class="m">휴대폰 번호 뒷자리 4자리를 넣으면 5초마다 서버 기록을 불러옵니다(정답 가사는 표시하지 않음; 채점은 내보내기 스크립트로).</p>
 <input id="pid" placeholder="뒷자리 4자리"> <button id="go">보기</button> <span id="st" class="m"></span>
-<div id="meta" class="m" style="margin-top:10px"></div><table><thead><tr><th>순서</th><th>문항</th><th>시도</th><th>응답(시도별)</th><th>종료</th></tr></thead><tbody id="tb"></tbody></table>
+<div id="meta" class="m" style="margin-top:10px"></div><table><thead><tr><th>순서</th><th>문항</th><th>시도</th><th>응답(시도별)</th><th>종료</th><th>평정(또렷/뭉개짐)</th></tr></thead><tbody id="tb"></tbody></table>
 <script>
 const API="https://zwmdukuecvntquygsksv.supabase.co/functions/v1/human-evaluation", EVAL="ssdci-transcription-pilot-001"; let timer=null;
 const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
@@ -14,7 +14,7 @@ async function pull(pid){ try{ const r=await fetch(API,{method:"POST",headers:{"
   const j=await r.json(); const rows=[]; let meta=null;
   (j.answers||[]).forEach(a=>{ if(a.sample_id==="meta"){meta=a;return;} try{const x=JSON.parse(a.comment||"{}"); rows.push(x);}catch(e){} });
   rows.sort((a,b)=>(a.pos??99)-(b.pos??99)||String(a.id).localeCompare(b.id));
-  document.getElementById("tb").innerHTML=rows.map(x=>`<tr><td>${x.pos??"연습"}</td><td>${esc(x.id)}</td><td>${(x.attempts||[]).length}${x.pending?" (재생 후 응답 대기)":""}</td><td>${(x.attempts||[]).map(t=>`${t.k}. ${t.unheard?"(못 들음)":esc(t.text)}`).join("<br>")}</td><td>${x.done||""}</td></tr>`).join("");
+  document.getElementById("tb").innerHTML=rows.map(x=>`<tr><td>${x.pos??"연습"}</td><td>${esc(x.id)}</td><td>${(x.attempts||[]).length}${x.pending?" (재생 후 응답 대기)":""}</td><td>${(x.attempts||[]).map(t=>`${t.k}. ${t.unheard?"(못 들음)":esc(t.text)}`).join("<br>")}</td><td>${x.done||""}</td><td>${x.rating?x.rating.clear+" / "+x.rating.muddy:""}</td></tr>`).join("");
   document.getElementById("meta").textContent=meta?("설정: "+(meta.comment||"")+" | "+(meta.selected_options||[]).join(" | ")):"";
   document.getElementById("st").textContent="갱신 "+new Date().toLocaleTimeString("ko-KR")+(j.submitted_at?" · 제출됨":"");
  }catch(e){document.getElementById("st").textContent="불러오기 실패";} }
