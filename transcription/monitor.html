@@ -4,19 +4,28 @@
 input,button{font:inherit;padding:8px 10px}table{border-collapse:collapse;width:100%;margin-top:12px}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 th{white-space:nowrap}.m{opacity:.7;font-size:.9em}</style></head><body>
 <h1 style="font-size:1.3rem">노래 가사 받아 적기 테스트 모니터</h1>
-<p class="m">휴대폰 번호 뒷자리 4자리를 넣으면 5초마다 서버 기록을 불러옵니다(정답 가사는 표시하지 않음; 채점은 내보내기 스크립트로).</p>
+<p class="m">휴대폰 번호 뒷자리 4자리를 넣으면 5초마다 서버 기록을 불러옵니다(읽기만 하며 기록을 바꾸지 않음; 채점은 내보내기 스크립트로). 정답 가사는 페이지에 암호화되어 있어 연구자 암호를 넣어야 보입니다.</p>
 <input id="pid" placeholder="뒷자리 4자리"> <button id="go">보기</button> <span id="st" class="m"></span>
-<div id="meta" class="m" style="margin-top:10px"></div><table><thead><tr><th>순서</th><th>문항</th><th>시도</th><th>응답(시도별)</th><th>종료</th><th>평정(또렷/뭉개짐)</th></tr></thead><tbody id="tb"></tbody></table>
+<div style="margin-top:8px"><input id="pw" type="password" placeholder="정답 보기 암호" autocomplete="off"> <button id="unlock">정답 보기</button> <span id="ps" class="m"></span></div>
+<div id="meta" class="m" style="margin-top:10px"></div><table><thead><tr><th>순서</th><th>문항</th><th>정답</th><th>시도</th><th>응답(시도별)</th><th>종료</th><th>평정(또렷/뭉개짐)</th></tr></thead><tbody id="tb"></tbody></table>
 <script>
-const API="https://zwmdukuecvntquygsksv.supabase.co/functions/v1/human-evaluation", EVAL="ssdci-transcription-pilot-002"; let timer=null;
+const API="https://zwmdukuecvntquygsksv.supabase.co/functions/v1/human-evaluation", EVAL="ssdci-transcription-pilot-002", ANS={"salt": "mrAwsfL9qu2Eu/xf2BKDMg==", "iv": "dYsckph5clHKYlgk", "iter": 200000, "ct": "nFsj8+EiVlSjlUpUTd4n2cm6O5nBeAovBsHrkWmrF1hy0m2C5f8rJTrbCh7xd5A0XC6owP/a5u4zMUGwNI+7loLUCMBtfa7MQivEuzwQAiQje7Lc7mkTi57H2c13yr0IN4KLuSaUtX1BO2CgnloTknsQAhkAoWnG6oDAw3RVRj4leCPIdniV7VYeuINRuf64lEVweiqCc9TTpFSmaZ3niIyKBieiCYPLWm791jHFyY3PskK1OUYt0HU56XmMK5u2CdarEfR+UO7QmHPMecYu9OGEEa+2OgTmwplLLJm3LjR3A39LGVJoikgPGCHFIPgOuqf0SPUUTIMIpTUPmbOy2L/JaY9ncCINUAFjkHtllJP9g6mY1/4ZNvEPYu6vZfYwl+BqL9ZPomCRsBzlUgcS6p9ypzIpDErAA7GlkZgiDD/pIctDc9g3qR67SkAEmNp3Sv133ONIZR+HPMals6V6AO54HsuBu/10LmFSj2Ky8Weiganf2lOk07nrgSWv9SIJp9aTZ2FfG8HAvMcC3shF07lOlbr4vQia1uZGL0czeiCtqQGoHk/Zc1/PoiCuBYbG+yJCLdj+nc2jOrj+M9dkb1Vco4oeDD33JEe4O07DrvS1mkGYh+4EeNZ8k6nF+87aXFSV6w9KRddivSSscNpEuhfxSBxsn20rwPt4j7zrME5gozUmjPtvJK1hIlp6SDeusGXfVYn2gOKCfR12qOwmfONqFD8k24mof4D6/0XEf2qb4zfoe60KVDAxARPn0rciovRKaFEInzIQxukebd80C3MTrlvEwCdk8P2mfwKIaU5d6UmFYtShxYz16ToGN5CYHMBiapnfyHIr71J9cRdVhQ8T6uZWyMLpRewIlOF0my4ZcGCKDTHkDLNOryiZ4cAGRwWWcMHWHajtFi5av7BuFrkulGwv25PP6Sjfl4anMrRpFlz7C8Aqa1hv1yWeCdNPPL8vBB8uywkKUIcY9yv7T9EpsY0TU+N8bzXSVlkzRe1jXFOa/fwuA5vA9f9DaFZnG1DuKd8LJ+LJWNAyrkBrb1tYUhLF+6WeCR8Pib+YxXjoLLtreeOIPOorG4Ttag2ZBVC1C14+XrgfZrbCQSmohfbpYTYuSFW8/okVUgQa6MiwOyfJzYd57NUr/9xkIbrhnQqWvV0IeviOicRV6bii0Ux9Sh79s20hfjebz7KCrwstYncG+Ds1rQtlKHM/aznwcH04RMHRcE9xCcTWKmfR7AUkpkuTUbvfwr/BkvlJ9PF41IL6Q9Ws95T08+ze4w=="}; let timer=null, ref=null, cur=null;
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)); const PKEY="mon-pass-"+EVAL;
+async function unlock(pass){ if(!ANS) throw new Error("no answers"); const km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pass),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(ANS.salt),iterations:ANS.iter,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(ANS.iv)},key,b64(ANS.ct)))); }
+async function tryUnlock(pass,quiet){ const ps=document.getElementById("ps"); try{ ref=await unlock(pass); try{localStorage.setItem(PKEY,pass);}catch(e){} ps.textContent="정답 표시 중"; if(cur) pull(cur); }
+  catch(e){ ref=null; if(!quiet) ps.textContent="암호가 맞지 않습니다"; } }
 const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 async function pull(pid){ try{ const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({evaluation_id:EVAL,participant_id:"ssdci-"+pid.toLowerCase(),action:"resume"})});
   const j=await r.json(); const rows=[]; let meta=null;
   (j.answers||[]).forEach(a=>{ if(a.sample_id==="meta"){meta=a;return;} try{const x=JSON.parse(a.comment||"{}"); rows.push(x);}catch(e){} });
   rows.sort((a,b)=>(a.pos??99)-(b.pos??99)||String(a.id).localeCompare(b.id));
-  document.getElementById("tb").innerHTML=rows.map(x=>`<tr><td>${x.pos??"연습"}</td><td>${esc(x.id)}</td><td>${(x.attempts||[]).length}${x.pending?" (재생 후 응답 대기)":""}</td><td>${(x.attempts||[]).map(t=>`${t.k}. ${t.unheard?"(못 들음)":esc(t.text)}`).join("<br>")}</td><td>${x.done||""}</td><td>${x.rating?x.rating.clear+" / "+x.rating.muddy:""}</td></tr>`).join("");
+  document.getElementById("tb").innerHTML=rows.map(x=>`<tr><td>${x.pos??"연습"}</td><td>${esc(x.id)}</td><td>${ref?esc(ref[x.id]??""):"-"}</td><td>${(x.attempts||[]).length}${x.pending?" (재생 후 응답 대기)":""}</td><td>${(x.attempts||[]).map(t=>`${t.k}. ${t.unheard?"(못 들음)":esc(t.text)}`).join("<br>")}</td><td>${x.done||""}</td><td>${x.rating?x.rating.clear+" / "+x.rating.muddy:""}</td></tr>`).join("");
   document.getElementById("meta").textContent=meta?("설정: "+(meta.comment||"")+" | "+(meta.selected_options||[]).join(" | ")):"";
   document.getElementById("st").textContent="갱신 "+new Date().toLocaleTimeString("ko-KR")+(j.submitted_at?" · 제출됨":"");
  }catch(e){document.getElementById("st").textContent="불러오기 실패";} }
-document.getElementById("go").onclick=()=>{const p=document.getElementById("pid").value.trim(); if(!p)return; clearInterval(timer); pull(p); timer=setInterval(()=>pull(p),5000);};
+document.getElementById("go").onclick=()=>{const p=document.getElementById("pid").value.trim(); if(!p)return; cur=p; clearInterval(timer); pull(p); timer=setInterval(()=>pull(p),5000);};
+document.getElementById("unlock").onclick=()=>tryUnlock(document.getElementById("pw").value,false);
+try{ const sp=localStorage.getItem(PKEY); if(sp) tryUnlock(sp,true); }catch(e){}
 </script></body></html>
