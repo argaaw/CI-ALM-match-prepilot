@@ -257,15 +257,19 @@ function itemScreen() {
   return c;
 }
 function finish() {
+  if (S.submittedAt) {                                // submitted: a clear end screen; the comment can no longer be edited (it is sent at submission)
+    return el(`<div><h1>제출이 완료되었습니다</h1><div class="card"><p>참여해 주셔서 감사합니다.</p><p><b>이제 이 창을 닫으셔도 됩니다.</b></p>
+      <p class="muted">제출됨: ${new Date(S.submittedAt).toLocaleString("ko-KR")}</p></div></div>`);
+  }
   const c = el(`<div><h1>모두 마치셨습니다</h1><div class="card"><p>수고하셨습니다. 마지막으로, 어려우셨던 점이나 하고 싶으신 말씀이 있으면 적어 주세요(선택).</p>
     <textarea id="note" aria-label="의견"></textarea></div><div class="card" id="sb"></div></div>`);
   const ta = c.querySelector("#note"); ta.value = S.note || ""; ta.oninput = () => { S.note = ta.value; save(); };
   const sb = c.querySelector("#sb");
-  const st = el(`<p class="muted" style="margin-top:10px">${S.submittedAt ? "제출됨: " + new Date(S.submittedAt).toLocaleString("ko-KR") : "아직 제출하지 않으셨습니다"}</p>`);
+  const st = el(`<p class="muted" style="margin-top:10px">아래 버튼을 누르셔야 끝납니다.</p>`);
   const b = el(`<button class="primary">제출하기</button>`);
-  b.onclick = async () => { b.disabled = true; b.textContent = "제출 중…";
-    try { await saveMeta(); for (const id of Object.keys(S.rec)) await saveItem(id); const j = await api({ action: "submit" }); S.submittedAt = j ? j.submitted_at : now(); save(); st.textContent = "제출됨: " + new Date(S.submittedAt).toLocaleString("ko-KR"); b.textContent = "제출되었습니다"; }
-    catch (e) { b.disabled = false; b.textContent = "다시 제출하기"; st.textContent = "제출되지 않았습니다. 인터넷 연결을 확인하신 뒤 다시 눌러 주세요."; } };
+  b.onclick = async () => { b.disabled = true; ta.readOnly = true; b.textContent = "제출 중…";
+    try { await saveMeta(); for (const id of Object.keys(S.rec)) await saveItem(id); const j = await api({ action: "submit" }); S.submittedAt = j ? j.submitted_at : now(); save(); render(); }
+    catch (e) { b.disabled = false; ta.readOnly = false; b.textContent = "다시 제출하기"; st.textContent = "제출되지 않았습니다. 인터넷 연결을 확인하신 뒤 다시 눌러 주세요."; } };
   sb.appendChild(b); sb.appendChild(st);
   return c;
 }
