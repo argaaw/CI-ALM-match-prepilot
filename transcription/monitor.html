@@ -8,7 +8,7 @@ th{white-space:nowrap}.m{opacity:.7;font-size:.9em}</style></head><body>
 <input id="pid" placeholder="뒷자리 4자리"> <button id="go">보기</button> <span id="st" class="m"></span>
 <div id="meta" class="m" style="margin-top:10px"></div><table><thead><tr><th>순서</th><th>문항</th><th>시도</th><th>응답(시도별)</th><th>종료</th><th>평정(또렷/뭉개짐)</th></tr></thead><tbody id="tb"></tbody></table>
 <script>
-const API="https://zwmdukuecvntquygsksv.supabase.co/functions/v1/human-evaluation", EVAL="ssdci-transcription-pilot-001"; let timer=null;
+const API="https://zwmdukuecvntquygsksv.supabase.co/functions/v1/human-evaluation", EVAL="ssdci-transcription-pilot-002"; let timer=null;
 const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 async function pull(pid){ try{ const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({evaluation_id:EVAL,participant_id:"ssdci-"+pid.toLowerCase(),action:"resume"})});
   const j=await r.json(); const rows=[]; let meta=null;
