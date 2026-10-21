@@ -1,0 +1,126 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"></head><body><title>노래 가사 듣고 적기 결과</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one phone-width column in large type. Greeting and a plain note, two short summaries (more replays, feeling vs result),
+   how difficulty was estimated, then one card per question in the order it was heard: replay, lyric, first and final answers with
+   the recognised syllables highlighted, difficulty level, own clarity rating. */
+:root { --bg:#f6f5f1; --surface:#ffffff; --ink:#1d1c1a; --muted:#625f58; --line:#e0ddd5; --accent:#2c6a8a; --accent-ink:#ffffff; --soft:#eaf1f5;
+  --hit:#d5ecd9; --hit-ink:#1d5a31; --l1:#2e7d4f; --l2:#6a8f3a; --l3:#9a7a1c; --l4:#b5582a; --l5:#a23a3a; --font:"Noto Sans KR","Apple SD Gothic Neo",system-ui,sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#151614; --surface:#1e201d; --ink:#ecebe6; --muted:#a8a59d; --line:#33352f; --accent:#8cc3de; --accent-ink:#0f1a22; --soft:#203039;
+  --hit:#22412b; --hit-ink:#a8dcb5; --l1:#86cfa0; --l2:#b6d37f; --l3:#e3c46a; --l4:#eba07a; --l5:#f0a0a0; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#151614; --surface:#1e201d; --ink:#ecebe6; --muted:#a8a59d; --line:#33352f; --accent:#8cc3de; --accent-ink:#0f1a22; --soft:#203039;
+  --hit:#22412b; --hit-ink:#a8dcb5; --l1:#86cfa0; --l2:#b6d37f; --l3:#e3c46a; --l4:#eba07a; --l5:#f0a0a0; color-scheme:dark }
+body { background:var(--bg); color:var(--ink); font-family:var(--font); font-size:18px; line-height:1.65; word-break:keep-all; overflow-wrap:anywhere; }
+.wrap { max-width:640px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:28px 64px; display:grid; gap:18px; }
+h1 { font-size:1.55rem; margin:0; text-wrap:balance; } h2 { font-size:1.2rem; margin:0; text-wrap:balance; } p { margin:0; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; display:grid; gap:12px; }
+.note { background:var(--soft); border-radius:12px; padding:14px 16px; font-size:1rem; display:grid; gap:6px; }
+.muted { color:var(--muted); font-size:.95rem; }
+.bars { display:grid; gap:8px; }
+.bar { display:grid; grid-template-columns:auto minmax(0, 1fr) 3em; gap:10px; align-items:center; font-size:.98rem; }
+.bar .track { background:var(--line); border-radius:6px; height:14px; overflow:hidden; } .bar .fill { background:var(--accent); height:100%; border-radius:6px; }
+.bar .v { text-align:right; font-variant-numeric:tabular-nums; } .bar > span:first-child { white-space:nowrap; }
+.levels { display:flex; flex-wrap:wrap; gap:6px; }
+.lv { font-size:.85rem; font-weight:700; border-radius:999px; padding:2px 10px; border:2px solid currentColor; white-space:nowrap; }
+.q { display:grid; gap:10px; }
+.qhead { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; } .qhead b { font-size:1.15rem; }
+audio { width:100%; }
+.lab { font-size:.85rem; color:var(--muted); font-weight:500; }
+.ref { font-size:1.2rem; font-weight:700; }
+.ans { display:grid; gap:2px; }
+.ans .t { font-size:1.08rem; } .ans .t .h { background:var(--hit); color:var(--hit-ink); border-radius:4px; font-weight:700; padding:0 1px; } .ans .t .blank { color:var(--muted); }
+.ans .c { font-size:.92rem; color:var(--muted); }
+.lockin { } #code { font:inherit; font-size:1.15rem; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); width:100%; box-sizing:border-box; letter-spacing:.05em; }
+#open { font:inherit; font-weight:700; font-size:1.1rem; min-height:56px; border-radius:12px; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); cursor:pointer; }
+#code:focus-visible, #open:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+[hidden] { display:none !important; }
+.legend .h { background:var(--hit); color:var(--hit-ink); border-radius:4px; font-weight:700; padding:0 4px; }
+</style>
+<div class="wrap" id="lock" hidden>
+  <h1>개인 결과 페이지</h1>
+  <div class="card">
+    <p>이 페이지는 연구에 참여하신 분만 보실 수 있는 개인 결과 페이지입니다. 연구진에게 받으신 <b>확인 코드</b>를 입력해 주세요.</p>
+    <input id="code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="확인 코드" aria-label="확인 코드">
+    <button id="open" type="button">결과 보기</button>
+    <p class="muted" id="lockMsg" role="status"></p>
+  </div>
+</div>
+<div class="wrap" id="content">
+  <header style="display:grid;gap:10px">
+    <h1>노래 가사 듣고 적기 결과</h1>
+    <p>참여해 주셔서 감사합니다. 들으신 15개 문제의 결과를 정리했습니다. 문제 번호는 들으신 순서와 같습니다.</p>
+    <div class="note">
+      <p>반주가 있는 노래의 가사는 정상 청력으로 들어도 알아듣기 어려운 편입니다. 이번 문제들은 일부러 쉬운 문제부터 아주 어려운 문제까지 고르게 섞었습니다.</p>
+      <p>이 결과는 연구용 과제의 결과이며, 청력이나 재활 정도를 평가하는 검사는 아닙니다. 결과에 대해 궁금하신 점은 연구진에게 편하게 물어봐 주세요.</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2>여러 번 들을수록 더 많이 알아들으셨어요</h2>
+    <p id="playsText"></p>
+    <div class="bars" id="bars"></div>
+  </section>
+
+  <section class="card">
+    <h2>들으신 느낌과 결과가 잘 맞았어요</h2>
+    <p id="feelText"></p>
+  </section>
+
+  <section class="card">
+    <h2>문제 난이도는 이렇게 정했어요</h2>
+    <p>인공와우 소리를 시뮬레이션한 소리를 AI로 분석해서, 문제마다 난이도를 미리 정했습니다. 다섯 단계로 표시했습니다.</p>
+    <div class="levels" id="levels"></div>
+    <p class="muted">이 난이도는 대략적인 참고용입니다. 실제로 어렵게 느끼시는 문제는 사람마다 다를 수 있어서, 표시된 난이도와 결과가 다른 문제도 있을 수 있습니다.</p>
+    <p class="muted legend">아래 답에서 <span class="h">초록색</span> 글자는 맞게 적으신 부분입니다.</p>
+  </section>
+
+  <div id="list" style="display:grid;gap:14px"></div>
+
+  <section class="card">
+    <p>다시 한번 참여해 주셔서 진심으로 감사드립니다.</p>
+    <p>이번 과제는 앞으로 진행할 연구를 준비하기 위한 사전 테스트였으며, 올해 12월부터 정식 연구를 진행할 예정입니다. 이 연구는 인공와우를 사용하시는 분들께 맞는 음악 듣기 연습 자료를 만들기 위한 기초 연구로, 이번처럼 노래를 듣고 가사를 적는 과제가 포함됩니다. 그때도 함께 참여해 주실 수 있다면 정말 감사하겠습니다. 자세한 일정과 방법은 따로 연락드려 안내해 드리겠습니다.</p>
+    <p style="text-align:right;font-weight:500">서울대학교 음악오디오연구실 · KAIST 음악 및 뇌과학 연구실</p>
+  </section>
+</div>
+<script>
+const DATA = null, ENC = {"id": "d7bc1c90", "salt": "jOAMcRKl4JAfZ4z66fkETA==", "iv": "fozi/6XKHK6OWegn", "iter": 300000, "ct": "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"};
+function show(D) {
+const LV = ["쉬움", "조금 쉬움", "보통", "어려움", "매우 어려움"], LC = ["--l1", "--l2", "--l3", "--l4", "--l5"];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const lv = name => `<span class="lv" style="color:var(${LC[LV.indexOf(name)]})">${name}</span>`;
+document.getElementById("levels").innerHTML = LV.map(lv).join("");
+document.getElementById("playsText").textContent = `처음 들으셨을 때는 가사의 약 ${D.byplays[0]}%를, 다섯 번까지 들으신 뒤에는 약 ${D.byplays[4]}%를 적으셨어요. 특히 두 번째로 들으셨을 때 가장 많이 늘었어요.`;
+document.getElementById("bars").innerHTML = D.byplays.map((v, k) => `<div class="bar"><span>${k + 1}번 들은 뒤</span><span class="track"><span class="fill" style="display:block;width:${v}%"></span></span><span class="v">${v}%</span></div>`).join("");
+document.getElementById("feelText").textContent = `또렷하게 들렸다고 하신 문제(4점 이상, ${D.clearHigh.n}문제)는 평균 ${D.clearHigh.pct}%를 맞히셨고, 잘 안 들렸다고 하신 문제(2점 이하, ${D.clearLow.n}문제)는 평균 ${D.clearLow.pct}%였어요. 들으실 때 느끼신 정도가 실제 결과와 잘 맞았습니다.`;
+document.addEventListener("play", e => { document.querySelectorAll("audio").forEach(x => { if (x !== e.target) x.pause(); }); }, true);
+const marked = (text, hit) => { if (!text) return '<span class="blank">(적지 않으심)</span>'; const H = new Set(hit); return [...text].map((ch, i) => H.has(i) ? `<span class="h">${esc(ch)}</span>` : esc(ch)).join(""); };
+document.getElementById("list").innerHTML = D.qs.map(q => `<article class="card q">
+  <div class="qhead"><b>문제 ${q.n}</b>${lv(q.level)}</div>
+  <audio controls preload="none" src="${q.src}"></audio>
+  <div><p class="lab">정답 가사</p><p class="ref">${esc(q.ref)}</p></div>
+  <div class="ans"><p class="lab">처음 들으셨을 때 적으신 답</p><p class="t">${marked(q.first, q.hit1)}</p><p class="c">${q.syl}글자 중 ${q.hit1.length}글자</p></div>
+  <div class="ans"><p class="lab">${q.plays}번 들으신 뒤 마지막 답</p><p class="t">${marked(q.last, q.hit5)}</p><p class="c">${q.syl}글자 중 ${q.hit5.length}글자</p></div>
+  <p class="muted">들으실 때 또렷하다고 느끼신 정도: ${q.clear}점 (7점 만점)</p>
+</article>`).join("");
+}
+// locked build (2026-10-21): the participant's results are AES-GCM encrypted with a key derived (PBKDF2) from their personal code
+const b64 = x => Uint8Array.from(atob(x), c => c.charCodeAt(0));
+async function unlock(code) {
+  const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(code), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(ENC.salt), iterations: ENC.iter, hash: "SHA-256" }, km, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(ENC.iv) }, key, b64(ENC.ct))));
+}
+const norm = c => c.trim().toLowerCase().replace(/\s+/g, "");
+if (!ENC) show(DATA);
+else {
+  const content = document.getElementById("content"), lock = document.getElementById("lock"), msg = document.getElementById("lockMsg"), input = document.getElementById("code");
+  content.hidden = true; lock.hidden = false; const K = "result-code-" + ENC.id;
+  const tryCode = async (c, quiet) => { try { const D = await unlock(norm(c)); try { localStorage.setItem(K, norm(c)); } catch (e) {} lock.hidden = true; content.hidden = false; show(D); window.scrollTo(0, 0); }
+    catch (e) { if (!quiet) msg.textContent = "확인 코드가 맞지 않습니다. 다시 확인해 주세요."; } };
+  document.getElementById("open").onclick = () => tryCode(input.value, false);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") tryCode(input.value, false); });
+  try { const saved = localStorage.getItem(K); if (saved) tryCode(saved, true); } catch (e) {}
+}
+</script>
+</body></html>
