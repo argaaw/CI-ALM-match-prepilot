@@ -230,7 +230,8 @@ function helpButton() {                              // reopen the instructions 
 // one transcription item: play -> write -> save (the text is locked) -> then ONE choice: play again (text unlocks after the replay)
 // or end with this answer. The save after the last allowed play ends the item. Then two 7-point ratings of the sound; practice
 // items then show the target lyric.
-const RATE_Q = [["clear", "들으신 소리의 특징(음정, 악기, 가사 등)이 또렷하게 들렸다."], ["muddy", "들으신 소리가 뭉개지거나 잡음처럼 들렸다."]];
+const RATE_Q = CFG.nh ? [["lyrics", "가사가 또렷하게 들렸다."]]   // NH (2026-11-08): the sound is always vocoded, so only lyric clarity is asked
+  : [["clear", "들으신 소리의 특징(음정, 악기, 가사 등)이 또렷하게 들렸다."], ["muddy", "들으신 소리가 뭉개지거나 잡음처럼 들렸다."]];
 function itemCard(it, label, onDone, feedback) {
   const r = S.rec[it.id] || (S.rec[it.id] = { id: it.id, attempts: [], t_start: now() });
   const k = r.attempts.length; const last = k ? r.attempts[k - 1] : null;
@@ -248,9 +249,9 @@ function itemCard(it, label, onDone, feedback) {
   function showRating() {                                       // after the item is finished, before any feedback
     c.querySelector(".rule").remove(); c.querySelector(".dots").remove(); c.querySelector("p.muted").textContent = "받아 적기를 마쳤습니다.";
     const ans = r.rating_draft || (r.rating_draft = {});
-    const box = el(`<div><p class="lab">방금 들으신 노래 소리에 대해, 아래 각 문장에 얼마나 동의하시는지 골라 주세요.</p>
+    const box = el(`<div><p class="lab">방금 들으신 노래 소리에 대해, 아래 ${RATE_Q.length > 1 ? "각 문장에" : "문장에"} 얼마나 동의하시는지 골라 주세요.</p>
       <p class="muted">1 = 전혀 그렇지 않다, 7 = 매우 그렇다</p>
-      ${RATE_Q.map(([key, q], i) => `<div class="rate" data-k="${key}"><p class="q">${i + 1}. ${q}</p><div class="scale">${[1, 2, 3, 4, 5, 6, 7].map(v => `<button data-v="${v}" aria-pressed="${ans[key] === v}" aria-label="${v}점">${v}</button>`).join("")}</div>
+      ${RATE_Q.map(([key, q], i) => `<div class="rate" data-k="${key}"><p class="q">${RATE_Q.length > 1 ? (i + 1) + ". " : ""}${q}</p><div class="scale">${[1, 2, 3, 4, 5, 6, 7].map(v => `<button data-v="${v}" aria-pressed="${ans[key] === v}" aria-label="${v}점">${v}</button>`).join("")}</div>
         <div class="ends"><span>전혀 그렇지 않다</span><span>매우 그렇다</span></div></div>`).join("")}
       <button class="primary big" id="rk" disabled>다음 →</button></div>`);
     const ok = box.querySelector("#rk"); const upd = () => { ok.disabled = !RATE_Q.every(([key]) => ans[key]); };
@@ -305,7 +306,7 @@ function practiceScreen() {
 function itemScreen() {
   if (S.idx === 0 && !S.rec[S.order[0]] && !S.shownStart) {
     const c = el(`<div><h1>연습이 끝났습니다</h1><div class="card"><p>이제 <b>본 문제 ${CFG.items.length}개</b>를 시작합니다.</p>
-      <ul class="tips"><li>방법은 연습 문제와 같습니다.</li><li>본 문제에서는 정답을 보여 드리지 않습니다.</li><li>문제마다 받아 적기가 끝나면, 들으신 소리에 대한 질문 2개에 답해 주세요.</li></ul>
+      <ul class="tips"><li>방법은 연습 문제와 같습니다.</li><li>본 문제에서는 정답을 보여 드리지 않습니다.</li><li>${CFG.nh ? "문제마다 받아 적기가 끝나면, 가사가 얼마나 또렷하게 들렸는지 골라 주세요." : "문제마다 받아 적기가 끝나면, 들으신 소리에 대한 질문 2개에 답해 주세요."}</li></ul>
       <p class="muted">중간에 쉬고 싶으시면 문제와 문제 사이에서 쉬어 주세요.</p></div><button class="primary" id="go">본 문제 시작</button></div>`);
     c.querySelector("#go").onclick = () => { S.shownStart = true; save(); render(); }; return c;
   }
