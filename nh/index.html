@@ -1,0 +1,345 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>노래 가사 듣고 적기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root { --bg:#f7f7f4; --card:#fff; --ink:#1b1b1a; --muted:#5f615c; --line:#d8d8d2; --accent:#1f5f8b; --accent-ink:#fff; --ok:#2a7a4b; --soft:#e8eef3; --warn:#9a2e2e;
+  --font:"Noto Sans KR",-apple-system,system-ui,sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#15171a; --card:#1e2126; --ink:#ecebe6; --muted:#a3a59e; --line:#34383e; --accent:#8db9dd; --accent-ink:#0f1a24; --ok:#6fc48f; --soft:#262d35; --warn:#f0a3a3; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#15171a; --card:#1e2126; --ink:#ecebe6; --muted:#a3a59e; --line:#34383e; --accent:#8db9dd; --accent-ink:#0f1a24; --ok:#6fc48f; --soft:#262d35; --warn:#f0a3a3; color-scheme:dark }
+body { background:var(--bg); color:var(--ink); font-family:var(--font); font-size:20px; line-height:1.55; word-break:keep-all; overflow-wrap:anywhere; margin:0; }
+.wrap { max-width:640px; margin:0 auto; padding:20px 16px 48px; }
+h1 { font-size:1.45rem; margin:0 0 10px; text-wrap:balance; } h2 { font-size:1.2rem; margin:0 0 10px; line-height:1.35; } p { margin:0 0 12px; }
+.muted { color:var(--muted); font-size:.95rem; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:14px; }
+button { font:inherit; cursor:pointer; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:14px 16px; font-size:1.1rem; min-height:60px; line-height:1.3; }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+button[disabled] { opacity:.45; cursor:not-allowed; }
+.primary { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); width:100%; font-weight:700; }
+.play { width:100%; font-weight:700; font-size:1.15rem; min-height:64px; border-color:var(--accent); color:var(--accent); }
+.play.on { background:var(--soft); }
+.big { width:100%; min-height:72px; font-size:1.2rem; font-weight:700; } .play .sub, .primary .sub { display:block; font-size:.9rem; font-weight:500; }
+.stack { display:flex; flex-direction:column; gap:12px; margin-top:14px; } .lab { margin:10px 0 6px; font-weight:500; }
+.steps li { margin-bottom:10px; }
+.row { display:flex; gap:10px; margin-top:10px; } .row button { flex:1; min-width:0; }
+textarea, input[type=text] { width:100%; box-sizing:border-box; font:inherit; font-size:1.1rem; border:1px solid var(--line); border-radius:10px; padding:12px; background:var(--card); color:var(--ink); }
+textarea { min-height:110px; font-size:1.25rem; }
+.warn { color:var(--warn); font-size:.95rem; border-left:3px solid var(--warn); padding:6px 10px; margin:0 0 10px; background:color-mix(in srgb, var(--warn) 8%, transparent); border-radius:0 8px 8px 0; }
+.progress { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:.95rem; color:var(--muted); margin-bottom:8px; }
+.help { min-height:48px; padding:8px 14px; font-size:1rem; font-weight:700; color:var(--accent); border-color:var(--accent); border-radius:999px; }
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:16px; overflow-y:auto; z-index:10; } .overlay .card { max-width:600px; width:100%; margin-top:20px; }
+.bar { height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin-bottom:14px; } .bar i { display:block; height:100%; background:var(--accent); }
+.dots { display:flex; gap:6px; margin:4px 0 12px; } .dots i { width:14px; height:14px; border-radius:50%; border:2px solid var(--line); display:inline-block; } .dots i.on { background:var(--accent); border-color:var(--accent); }
+.prev { font-size:.92rem; color:var(--muted); margin:8px 0 0; }
+.note { background:var(--soft); border-radius:10px; padding:10px 12px; font-size:.98rem; }
+.answer { background:var(--soft); border-radius:10px; padding:10px 12px; margin:10px 0; font-weight:500; }
+.choices { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .choices button[aria-pressed="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+ol { padding-left:1.3em; margin:0 0 12px; } li { margin-bottom:6px; }
+ul.tips { padding-left:1.1em; margin:6px 0 12px; } ul.tips li { margin-bottom:4px; }
+.tipbox { font-size:.95rem; color:var(--muted); } .tipbox ul.tips { margin:0 0 8px; }
+textarea.locked { background:var(--soft); color:var(--muted); }
+.choose { font-size:.98rem; } .choose .lab { margin-top:4px; } .choose.off { opacity:.55; }
+.rule { margin:0 0 12px; }
+.rate { margin:14px 0 18px; } .rate .q { font-weight:500; margin-bottom:8px; }
+.scale { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:6px; }
+.scale button { min-height:52px; padding:0; font-size:1.15rem; font-weight:700; }
+.scale button[aria-pressed="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.ends { display:flex; justify-content:space-between; font-size:.85rem; color:var(--muted); margin-top:4px; }
+</style>
+<div class="wrap" id="app" aria-live="polite"></div>
+<script>
+const CFG = {"items": [{"id": "p01", "src": "audio/p01_fe109497.mp3"}, {"id": "p02", "src": "audio/p02_9b94916b.mp3"}, {"id": "p03", "src": "audio/p03_256a2abd.mp3"}, {"id": "p04", "src": "audio/p04_dd6293b2.mp3"}, {"id": "p05", "src": "audio/p05_3a387eaf.mp3"}, {"id": "p06", "src": "audio/p06_92b6007d.mp3"}, {"id": "p07", "src": "audio/p07_ba302b1d.mp3"}, {"id": "p08", "src": "audio/p08_7a71407e.mp3"}, {"id": "p09", "src": "audio/p09_dcb142b7.mp3"}, {"id": "p10", "src": "audio/p10_deaa9876.mp3"}, {"id": "p11", "src": "audio/p11_8ecad74e.mp3"}, {"id": "p12", "src": "audio/p12_7f5071ca.mp3"}, {"id": "p13", "src": "audio/p13_4eca9c86.mp3"}, {"id": "p14", "src": "audio/p14_debf728f.mp3"}, {"id": "p15", "src": "audio/p15_9928fe86.mp3"}], "practice": [{"id": "x1", "src": "audio/x1_a0f1106f.mp3", "ref": "작은 식당에서 우리는 웃었지"}, {"id": "x2", "src": "audio/x2_83a8a0a3.mp3", "ref": "소중한 편지를 오래 기억할게"}], "test": {"id": "t1", "src": "audio/t1_65c95e54.mp3"}, "maxPlays": 5, "api": "https://zwmdukuecvntquygsksv.supabase.co/functions/v1/human-evaluation", "evalId": "nh-transcription-pilot-001", "nh": true, "prefix": "nh-", "conds": [{"items": [{"id": "p01", "src": "audio/p01_fe109497.mp3"}, {"id": "p02", "src": "audio/p02_9b94916b.mp3"}, {"id": "p03", "src": "audio/p03_256a2abd.mp3"}, {"id": "p04", "src": "audio/p04_dd6293b2.mp3"}, {"id": "p05", "src": "audio/p05_3a387eaf.mp3"}, {"id": "p06", "src": "audio/p06_92b6007d.mp3"}, {"id": "p07", "src": "audio/p07_ba302b1d.mp3"}, {"id": "p08", "src": "audio/p08_7a71407e.mp3"}, {"id": "p09", "src": "audio/p09_dcb142b7.mp3"}, {"id": "p10", "src": "audio/p10_deaa9876.mp3"}, {"id": "p11", "src": "audio/p11_8ecad74e.mp3"}, {"id": "p12", "src": "audio/p12_7f5071ca.mp3"}, {"id": "p13", "src": "audio/p13_4eca9c86.mp3"}, {"id": "p14", "src": "audio/p14_debf728f.mp3"}, {"id": "p15", "src": "audio/p15_9928fe86.mp3"}], "practice": [{"id": "x1", "src": "audio/x1_a0f1106f.mp3", "ref": "작은 식당에서 우리는 웃었지"}, {"id": "x2", "src": "audio/x2_83a8a0a3.mp3", "ref": "소중한 편지를 오래 기억할게"}], "test": {"id": "t1", "src": "audio/t1_65c95e54.mp3"}, "cond": "a", "condition": "me201_song"}, {"items": [{"id": "p01", "src": "audio/p01_c28187f9.mp3"}, {"id": "p02", "src": "audio/p02_8b33953f.mp3"}, {"id": "p03", "src": "audio/p03_fea5d20e.mp3"}, {"id": "p04", "src": "audio/p04_af47a283.mp3"}, {"id": "p05", "src": "audio/p05_cac90fb4.mp3"}, {"id": "p06", "src": "audio/p06_0b3b504b.mp3"}, {"id": "p07", "src": "audio/p07_efc2597d.mp3"}, {"id": "p08", "src": "audio/p08_f848772c.mp3"}, {"id": "p09", "src": "audio/p09_98fc191b.mp3"}, {"id": "p10", "src": "audio/p10_70bc7a58.mp3"}, {"id": "p11", "src": "audio/p11_312fd69d.mp3"}, {"id": "p12", "src": "audio/p12_9716c287.mp3"}, {"id": "p13", "src": "audio/p13_da191e9c.mp3"}, {"id": "p14", "src": "audio/p14_625bb6be.mp3"}, {"id": "p15", "src": "audio/p15_2b40c6e7.mp3"}], "practice": [{"id": "x1", "src": "audio/x1_c2927f4d.mp3", "ref": "작은 식당에서 우리는 웃었지"}, {"id": "x2", "src": "audio/x2_eeb410af.mp3", "ref": "소중한 편지를 오래 기억할게"}], "test": {"id": "t1", "src": "audio/t1_9704dc46.mp3"}, "cond": "b", "condition": "peters_a_noise"}]};
+const KEY = CFG.evalId === "ssdci-transcription-pilot-001" ? "ssdci-transcription-pilot-v1" : "ssdci-tx-" + CFG.evalId + (CFG.cond ? "-" + CFG.cond : "");   // a new item set (and each NH condition page) gets its own browser storage
+if (/[?&]reset\b/.test(location.search)) { try { localStorage.removeItem(KEY); } catch (e) {} history.replaceState(null, "", location.pathname); }   // testing: ?reset clears this browser's progress
+let S = { step: 0, pid: "", setup: {}, order: [], idx: 0, prac: 0, rec: {}, note: "", started: null, submittedAt: null };
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) S = Object.assign(S, s); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+// NH, several conditions on one page (2026-11-08): the condition is assigned when the code is first entered, to the condition with
+// fewer entrants so far (ties -> the first listed, so entrants alternate a, b, a, b). Assignments are kept as rows of a separate
+// ledger participant through the same Edge Function (no server change). A returning code keeps its condition (this browser, its
+// own meta row, or the ledger). Test codes (t, test..., test-a / test-b to force a condition) and failures use a hash of the code.
+const LEDGER = "nhassign-ledger";
+function applyCond(code) { const c = (CFG.conds || []).find(x => x.cond === code); if (!c) return false;
+  Object.assign(CFG, { items: c.items, practice: c.practice, test: c.test, cond: c.cond, condition: c.condition }); return true; }
+if (CFG.conds && S.cond) applyCond(S.cond);
+function hashCond(code) { let h = 2166136261; for (const ch of code) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return CFG.conds[(h >>> 0) % CFG.conds.length].cond; }
+async function rawApi(pid, body) {
+  const r = await fetch(CFG.api, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ evaluation_id: CFG.evalId, participant_id: pid, ...body }) });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || r.status); return j;
+}
+const condOf = a => { const m = (a && a.selected_options || []).map(x => /^cond=(.+)$/.exec(x)).find(Boolean); return m && CFG.conds.some(c => c.cond === m[1]) ? m[1] : null; };
+async function assignCond(code) {
+  const key = code.toLowerCase(), forced = /^test-([a-z])$/.exec(key);
+  if (forced && CFG.conds.some(c => c.cond === forced[1])) return { cond: forced[1], how: "test" };
+  if (key === "t" || key.startsWith("test")) return { cond: hashCond(key), how: "test" };
+  if (!CFG.api) return { cond: hashCond(key), how: "offline" };
+  try {
+    const mine = await rawApi(CFG.prefix + key, { action: "resume" });
+    const prev = condOf((mine && mine.answers || []).find(a => a.sample_id === "meta")); if (prev) return { cond: prev, how: "resume" };
+    const led = await rawApi(LEDGER, { action: "resume" }); const rowsL = (led && led.answers || []).filter(a => a.sample_id !== "meta");
+    const own = condOf(rowsL.find(a => a.sample_id === key)); if (own) return { cond: own, how: "ledger" };
+    const n = Object.fromEntries(CFG.conds.map(c => [c.cond, 0])); rowsL.forEach(a => { const c = condOf(a); if (c) n[c] += 1; });
+    const cond = CFG.conds.map(c => c.cond).reduce((best, c) => n[c] < n[best] ? c : best);
+    await rawApi(LEDGER, { action: "save", task: "Timbre", sample_id: key, audio_variant: "original",
+      selected_options: ["cond=" + cond, "before=" + JSON.stringify(n), "t=" + now()], comment: "" });
+    return { cond, how: "alternate", before: n };
+  } catch (e) { return { cond: hashCond(key), how: "fallback" }; }
+}
+const now = () => new Date().toISOString();
+function el(h) { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstElementChild; }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+async function api(body) {
+  if (!CFG.api || !S.pid) return null;
+  const r = await fetch(CFG.api, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ evaluation_id: CFG.evalId, participant_id: (CFG.prefix || "ssdci-") + S.pid.toLowerCase(), ...body }) });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || r.status); return j;
+}
+let syncMsg = ""; function setSync(t) { syncMsg = t; const e = document.getElementById("sync"); if (e) e.textContent = t; }
+async function saveItem(id) {
+  const r = S.rec[id]; if (!r) return;
+  try { await api({ action: "save", task: "Timbre", sample_id: id, audio_variant: "original",
+      selected_options: ["plays=" + r.attempts.length, "done=" + (r.done || ""), "order=" + (r.pos ?? "")], comment: JSON.stringify(r).slice(0, 4000) }); setSync("저장됨"); }
+  catch (e) { setSync("서버 저장 실패(기기에는 저장됨)"); }
+}
+async function saveMeta() {
+  try { await api({ action: "save", task: "Timbre", sample_id: "meta", audio_variant: "original",
+      selected_options: ["started=" + (S.started || ""), "order=" + S.order.join(" "), "ua=" + navigator.userAgent.slice(0, 120), ...(CFG.nh ? ["condition=" + CFG.condition, "cond=" + CFG.cond] : []), ...(S.assign ? ["assign=" + S.assign.how + (S.assign.before ? " " + JSON.stringify(S.assign.before) : "")] : [])],
+      comment: JSON.stringify({ setup: S.setup, note: S.note }).slice(0, 4000) }); } catch (e) {}
+}
+async function resume() {
+  try { const j = await api({ action: "resume" }); if (!j) return;
+    (j.answers || []).forEach(a => { if (a.sample_id === "meta") return; try { const r = JSON.parse(a.comment || "{}"); if (r.attempts && (!S.rec[a.sample_id] || S.rec[a.sample_id].attempts.length < r.attempts.length)) S.rec[a.sample_id] = r; } catch (e) {} });
+    if (j.submitted_at) S.submittedAt = j.submitted_at; save(); render(); } catch (e) { setSync("서버 연결 실패(기기 저장만)"); }
+}
+function seededOrder(code) {                       // deterministic shuffle from the participant code (mulberry32)
+  let h = 2166136261; for (const ch of code) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  let a = h >>> 0; const rnd = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const ids = CFG.items.map(x => x.id); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; } return ids;
+}
+const audio = new Audio(); audio.preload = "auto";
+function playOnce(src, btn, onEnd) {
+  btn.disabled = true; btn.classList.add("on"); const t0 = now(); let started = false;
+  audio.onplaying = () => { started = true; }; audio.onended = () => { btn.classList.remove("on"); onEnd({ t_play: t0, t_end: now(), ok: true }); };
+  audio.onerror = () => { btn.disabled = false; btn.classList.remove("on"); btn.textContent = "재생이 되지 않았습니다. 다시 눌러 주세요"; };
+  audio.src = src; audio.currentTime = 0; audio.play().catch(() => { btn.disabled = false; btn.classList.remove("on"); btn.textContent = "재생이 되지 않았습니다. 다시 눌러 주세요"; });
+}
+
+function render() {
+  const app = document.getElementById("app"); app.innerHTML = "";
+  const steps = [welcome, CFG.nh ? setupNH : setup, howto, practiceScreen, itemScreen, finish];
+  app.appendChild(steps[Math.min(S.step, steps.length - 1)]());
+  window.scrollTo(0, 0);
+}
+function welcome() {
+  const c = el(`<div><h1>노래 가사 듣고 적기</h1>
+    <div class="card">${CFG.nh ? `<p>한국어 노래의 가사 한 줄을 이어폰으로 듣고, 들린 대로 적어 주시는 활동입니다. 약 20분 걸립니다.</p>
+    <p>노래 소리는 <b>인공와우 시뮬레이션</b>(인공와우의 소리 처리 방식을 흉내 내어 바꾼 소리)이라, 알아듣기 어렵게 들릴 수 있습니다.</p>` : `<p>한국어 노래의 가사 한 줄을 인공와우로 듣고, 들린 대로 적어 주시는 활동입니다. 약 30분 걸립니다.</p>`}
+    ${CFG.nh ? `<p>가사는 들리는 그대로 적어 주시면 됩니다.</p>` : `<p>연구용 프로그램을 개발하기 위한 비공개 테스트입니다. 정답을 맞히는 시험이 아니니 들리는 만큼만 적어 주시면 됩니다.</p>`}
+    <p class="note">진행 방법에서 이해되지 않는 부분이 있으면 언제든 담당 연구원에게 물어봐 주세요.</p>
+    <p class="muted">중간에 창을 닫으셔도 같은 ${CFG.nh ? "기기" : "휴대폰"}에서 다시 여시면 이어서 하실 수 있습니다.</p>
+    ${CFG.nh ? `<label for="pid"><b>참가자 코드</b>를 입력해 주세요.</label>
+    <p class="muted" style="margin:4px 0 0">아무 코드나 정해 주시면 됩니다(영문·숫자·한글, 2–20자). 중간에 다시 이어서 하실 때 같은 코드를 입력하시면 됩니다.</p>
+    <input type="text" id="pid" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="20" style="margin-top:8px" value="${esc(S.pid)}" placeholder="예: minsu">
+    <p class="warn" id="pw" hidden>영문·숫자·한글로 2–20자를 입력해 주세요.</p></div>` : `<label for="pid"><b>휴대폰 번호 뒷자리 4자리</b>를 입력해 주세요.</label>
+    <input type="text" id="pid" inputmode="numeric" autocomplete="off" maxlength="4" style="margin-top:8px" value="${esc(S.pid)}" placeholder="예: 1234">
+    <p class="warn" id="pw" hidden>숫자 4자리를 입력해 주세요.</p></div>`}
+    <button class="primary" id="go">시작하기</button></div>`);
+  c.querySelector("#go").onclick = async () => { const v = c.querySelector("#pid").value.trim(); if (CFG.nh ? !/^[0-9A-Za-z\uAC00-\uD7A3_-]{2,20}$/.test(v) : (!/^[0-9]{4}$/.test(v) && !/^t(est)?$/i.test(v))) { c.querySelector("#pw").hidden = false; c.querySelector("#pid").focus(); return; }
+    if (CFG.conds && !(S.cond && S.pid.toLowerCase() === v.toLowerCase())) { const go = c.querySelector("#go"); go.disabled = true; go.textContent = "확인 중…";
+      const a = await assignCond(v); S.cond = a.cond; S.assign = { ...a, t: now() }; applyCond(a.cond); }
+    S.pid = v; if (!S.order.length) S.order = seededOrder(v.toUpperCase()); if (!S.started) S.started = now(); S.step = 1; save(); resume(); saveMeta(); render(); };
+  return c;
+}
+function setup() {
+  const st = S.setup;
+  const c = el(`<div><h1>듣기 준비</h1>
+    <div class="card"><ol>
+      <li>조용한 곳에 앉아 주세요.</li>
+      <li>휴대폰 소리를 <b>인공와우로 바로 연결</b>(블루투스)해 주세요. 소리는 <b>인공와우로만</b> 들으시고, 반대쪽 귀로는 듣지 않습니다.</li>
+      <li>아래 <b>확인용 소리</b>를 들으시면서 휴대폰 볼륨을 <b>편안하게 충분히 들리는 크기</b>로 맞춰 주세요. 맞추신 볼륨은 끝날 때까지 바꾸지 말아 주세요.</li></ol>
+    <button class="play" id="tp">▶ 확인용 소리 듣기</button></div>
+    <div class="card"><h2>인공와우로 소리가 들리셨나요?</h2><div class="choices" id="q1"><button data-v="yes">들렸습니다</button><button data-v="no">안 들렸습니다</button></div></div>
+    <div class="card"><h2>인공와우 반대쪽 귀(인공와우를 하지 않은 귀)에서도 소리가 들리셨나요?</h2><p class="muted">이 활동에서는 소리를 <b>인공와우로만</b> 들어야 합니다. 반대쪽 귀로는 들리지 않아야 합니다.</p><div class="choices" id="q2"><button data-v="no">반대쪽 귀로는 안 들렸습니다</button><button data-v="yes">반대쪽 귀로도 들렸습니다</button></div>
+    <p class="warn" id="w2" hidden>반대쪽 귀로 들리셨다면 휴대폰 스피커에서 소리가 나고 있는 것입니다. 블루투스 연결을 다시 확인하신 뒤 확인용 소리를 다시 들어 주세요. 잘 안 되시면 담당 연구원에게 물어봐 주세요.</p></div>
+    <button class="primary" id="go" disabled>다음</button></div>`);
+  const tp = c.querySelector("#tp");
+  tp.onclick = () => playOnce(CFG.test.src, tp, () => { tp.disabled = false; tp.textContent = "▶ 확인용 소리 다시 듣기"; st.test_plays = (st.test_plays || 0) + 1; save(); });
+  const bind = (id, k) => c.querySelectorAll(`#${id} button`).forEach(b => { b.setAttribute("aria-pressed", st[k] === b.dataset.v);
+    b.onclick = () => { st[k] = b.dataset.v; st[k + "_at"] = now(); save(); render(); }; });
+  bind("q1", "ci_heard"); bind("q2", "nh_heard");
+  c.querySelector("#w2").hidden = st.nh_heard !== "yes";
+  const go = c.querySelector("#go"); go.disabled = !(st.ci_heard === "yes" && st.nh_heard === "no");
+  go.onclick = () => { S.step = 2; save(); saveMeta(); render(); };
+  return c;
+}
+function setupNH() {                                 // NH version: earphones on both ears, device (2026-11-08: no hearing question; lab acquaintances)
+  const st = S.setup;
+  const c = el(`<div><h1>듣기 준비</h1>
+    <div class="card"><ol>
+      <li>조용한 곳에 앉아 주세요.</li>
+      <li><b>이어폰이나 헤드폰을 양쪽 귀에</b> 착용해 주세요. 스피커로는 듣지 말아 주세요.</li>
+      <li>아래 <b>확인용 소리</b>를 들으시면서 볼륨을 <b>편안하게 충분히 들리는 크기</b>로 맞춰 주세요. 맞추신 볼륨은 끝날 때까지 바꾸지 말아 주세요.</li></ol>
+    <p class="muted">확인용 소리도 인공와우 시뮬레이션 소리라 가사가 잘 들리지 않을 수 있습니다. 소리가 나는지와 크기만 확인해 주세요.</p>
+    <button class="play" id="tp">▶ 확인용 소리 듣기</button></div>
+    <div class="card"><h2>양쪽 귀에서 모두 소리가 들리셨나요?</h2><div class="choices" id="q1"><button data-v="yes">양쪽 다 들렸습니다</button><button data-v="no">아니요</button></div>
+    <p class="warn" id="w1" hidden>이어폰이 양쪽 귀에 잘 착용되었는지, 연결이 되어 있는지 확인하신 뒤 확인용 소리를 다시 들어 주세요. 잘 안 되시면 담당 연구원에게 물어봐 주세요.</p></div>
+    <div class="card"><h2>무엇으로 듣고 계신가요?</h2><div class="choices" id="q2"><button data-v="wired">유선 이어폰</button><button data-v="wireless">무선(블루투스) 이어폰</button><button data-v="headphone">헤드폰</button></div></div>
+    <button class="primary" id="go" disabled>다음</button></div>`);
+  const tp = c.querySelector("#tp");
+  tp.onclick = () => playOnce(CFG.test.src, tp, () => { tp.disabled = false; tp.textContent = "▶ 확인용 소리 다시 듣기"; st.test_plays = (st.test_plays || 0) + 1; save(); });
+  const bind = (id, k) => c.querySelectorAll(`#${id} button`).forEach(b => { b.setAttribute("aria-pressed", st[k] === b.dataset.v);
+    b.onclick = () => { st[k] = b.dataset.v; st[k + "_at"] = now(); save(); render(); }; });
+  bind("q1", "both_heard"); bind("q2", "device");
+  c.querySelector("#w1").hidden = st.both_heard !== "no";
+  const go = c.querySelector("#go"); go.disabled = !(st.both_heard === "yes" && st.device);
+  go.onclick = () => { S.step = 2; save(); saveMeta(); render(); };
+  return c;
+}
+const WRITE_TIPS = `<ul class="tips">
+      <li>여러 번 들은 뒤 한꺼번에 적는 것이 아닙니다. <b>틀린 것 같거나 말이 어색해도, 들리는 그대로 적어 주세요.</b></li>
+      <li>한두 단어만 들려도, 들리신 단어만 적어 주시면 됩니다.</li>
+      <li>맞춤법은 신경 쓰지 않으셔도 됩니다.</li>
+      <li>정말 아무것도 들리지 않았을 때만 칸을 비워 두세요.</li></ul>`;
+const STEPS = first => `<ol class="steps">
+    <li>${first ? "다음 페이지에서 " : ""}<b>【▶ 노래 듣기】</b> 버튼을 누르면 노래 한 소절이 재생됩니다.</li>
+    <li>한 번 들을 때마다, 그때 들린 가사를 바로 칸에 적어 주세요.${WRITE_TIPS}</li></ol>`;
+const PLAY_RULE = `한 소절은 최대 ${CFG.maxPlays}번까지 들을 수 있습니다. ${CFG.maxPlays}번째 듣고 나면 자동으로 다음 문제로 넘어갑니다.`;
+const BUTTON_GUIDE = `<ul class="tips">
+      <li><b>【한 번 더 듣기】</b> 버튼 — 더 들어 보고 고치고 싶을 때. 다시 들으신 뒤, 적은 내용을 고쳐 주세요.</li>
+      <li><b>【이 답으로 끝내고 다음으로】</b> 버튼 — 더 들을 필요도, 고칠 것도 없을 때.</li></ul>`;
+function howto() {
+  const c = el(`<div><h1>하는 방법</h1><div class="card">${STEPS(true)}
+    <p>먼저 연습 문제 ${CFG.practice.length}개를 풀어 보겠습니다.</p>
+    <ul class="tips"><li>연습 문제는 끝나면 정답을 보여 드립니다. 본 문제에서는 정답을 보여 드리지 않습니다.</li></ul>
+    <p class="note">이해되지 않는 부분이 있으면 시작하기 전에 담당 연구원에게 물어봐 주세요.</p></div>
+    <button class="primary" id="go">연습 시작</button></div>`);
+  c.querySelector("#go").onclick = () => { S.step = 3; save(); render(); }; return c;
+}
+function helpButton() {                              // reopen the instructions as an overlay without leaving the item
+  const b = el(`<button class="help">? 하는 방법 다시 보기</button>`);
+  b.onclick = () => {
+    const id = S.step === 3 ? CFG.practice[S.prac]?.id : S.order[S.idx]; if (id && S.rec[id]) { S.rec[id].help = (S.rec[id].help || 0) + 1; save(); }
+    const ov = el(`<div class="overlay" role="dialog" aria-modal="true" aria-label="하는 방법"><div class="card"><h2>하는 방법</h2>${STEPS(false)}
+      <p>적으신 뒤 <b>【✔ 적은 내용 저장】</b>을 누르시면, 아래 두 버튼 중 하나를 고르실 수 있습니다.</p>${BUTTON_GUIDE}
+      <p class="muted">${PLAY_RULE}</p><p class="note">더 궁금하신 점은 담당 연구원에게 물어봐 주세요.</p>
+      <button class="primary big" id="cl">닫기</button></div></div>`);
+    ov.querySelector("#cl").onclick = () => ov.remove(); ov.onclick = e => { if (e.target === ov) ov.remove(); };
+    document.body.appendChild(ov); ov.querySelector("#cl").focus();
+  };
+  return b;
+}
+// one transcription item: play -> write -> save (the text is locked) -> then ONE choice: play again (text unlocks after the replay)
+// or end with this answer. The save after the last allowed play ends the item. Then two 7-point ratings of the sound; practice
+// items then show the target lyric.
+const RATE_Q = [["clear", "들으신 소리의 특징(음정, 악기, 가사 등)이 또렷하게 들렸다."], ["muddy", "들으신 소리가 뭉개지거나 잡음처럼 들렸다."]];
+function itemCard(it, label, onDone, feedback) {
+  const r = S.rec[it.id] || (S.rec[it.id] = { id: it.id, attempts: [], t_start: now() });
+  const k = r.attempts.length; const last = k ? r.attempts[k - 1] : null;
+  const playsDone = k + (r.pending ? 1 : 0);
+  const c = el(`<div class="card"><h2>${label}</h2><p class="muted" style="margin:0">들은 횟수 ${playsDone} / ${CFG.maxPlays}</p>
+    <div class="dots" aria-hidden="true">${Array.from({ length: CFG.maxPlays }, (_, i) => `<i class="${i < playsDone ? "on" : ""}"></i>`).join("")}</div>
+    <p class="muted rule">${PLAY_RULE}</p><div id="body"></div><p class="muted" id="sync">${syncMsg}</p></div>`);
+  const body = c.querySelector("#body");
+  const finishItem = reason => { r.done = reason; r.t_done = now(); save(); saveItem(it.id); render(); };
+  function showFeedback() {
+    const mine = r.attempts.length ? (r.attempts[r.attempts.length - 1].text || "(비워 둠)") : "";
+    body.appendChild(el(`<div><p>정답 가사</p><div class="answer">${esc(it.ref)}</div><p class="muted">적으신 것: ${esc(mine)}</p><button class="primary big" id="nx">다음</button></div>`));
+    body.querySelector("#nx").onclick = onDone;
+  }
+  function showRating() {                                       // after the item is finished, before any feedback
+    c.querySelector(".rule").remove(); c.querySelector(".dots").remove(); c.querySelector("p.muted").textContent = "받아 적기를 마쳤습니다.";
+    const ans = r.rating_draft || (r.rating_draft = {});
+    const box = el(`<div><p class="lab">방금 들으신 노래 소리에 대해, 아래 각 문장에 얼마나 동의하시는지 골라 주세요.</p>
+      <p class="muted">1 = 전혀 그렇지 않다, 7 = 매우 그렇다</p>
+      ${RATE_Q.map(([key, q], i) => `<div class="rate" data-k="${key}"><p class="q">${i + 1}. ${q}</p><div class="scale">${[1, 2, 3, 4, 5, 6, 7].map(v => `<button data-v="${v}" aria-pressed="${ans[key] === v}" aria-label="${v}점">${v}</button>`).join("")}</div>
+        <div class="ends"><span>전혀 그렇지 않다</span><span>매우 그렇다</span></div></div>`).join("")}
+      <button class="primary big" id="rk" disabled>다음 →</button></div>`);
+    const ok = box.querySelector("#rk"); const upd = () => { ok.disabled = !RATE_Q.every(([key]) => ans[key]); };
+    box.querySelectorAll(".rate").forEach(d => d.querySelectorAll("button").forEach(b => b.onclick = () => {
+      ans[d.dataset.k] = +b.dataset.v; d.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); save(); upd(); }));
+    upd();
+    ok.onclick = () => { r.rating = { ...ans, t: now() }; delete r.rating_draft; save(); saveItem(it.id); if (feedback) { body.innerHTML = ""; showFeedback(); } else onDone(); };
+    body.appendChild(box);
+  }
+  if (r.done) { if (!r.rating) { showRating(); return c; } if (feedback) { c.querySelector(".rule").remove(); showFeedback(); return c; } setTimeout(onDone, 0); return el(`<div></div>`); }
+  if (playsDone === 0) {                                        // first listen
+    const b = el(`<button class="play">▶ 노래 듣기</button>`); body.appendChild(b);
+    b.onclick = () => { b.textContent = "노래가 나오는 중…"; playOnce(it.src, b, t => { r.pending = t; save(); saveItem(it.id); render(); }); };
+    return c;
+  }
+  const left = CFG.maxPlays - playsDone;
+  const ta = el(`<textarea aria-label="들린 가사" placeholder="들리는 대로 적어 주세요 (틀려도 괜찮아요)"></textarea>`);
+  ta.value = r.pending ? (r.draft ?? (last ? last.text : "")) : (last ? last.text : "");
+  ta.readOnly = !r.pending; if (!r.pending) ta.classList.add("locked");
+  body.appendChild(el(`<p class="lab">${r.pending ? (k === 0 ? "방금 들으신 가사를 지금 적어 주세요." : "방금 다시 들으신 대로, 적은 내용을 고쳐 주세요.") : "적으신 내용이 저장되었습니다."}</p>`));
+  if (r.pending) body.appendChild(el(`<div class="tipbox">${WRITE_TIPS}</div>`));
+  body.appendChild(ta);
+  const sv = el(`<button class="primary big"></button>`);
+  const svLabel = () => { sv.innerHTML = ta.value.trim() ? "✔ 적은 내용 저장" : "아무것도 들리지 않았어요 <span class=\"sub\">(빈칸으로 저장)</span>"; };
+  const again = el(`<button class="play big">▶ 한 번 더 듣기 <span class="sub">(남은 횟수 ${left}번)</span></button>`);
+  const next = el(`<button class="primary big">이 답으로 끝내고 다음으로 →</button>`);
+  const box = el(`<div class="stack"></div>`);
+  if (r.pending) {
+    svLabel(); ta.oninput = () => { r.draft = ta.value; save(); svLabel(); }; box.appendChild(sv);
+    sv.onclick = () => { const text = ta.value.trim();
+      r.attempts.push({ k: r.attempts.length + 1, text, unheard: !text, edited: !!last && text !== (last.text || ""), ...r.pending, t_submit: now() });
+      delete r.pending; delete r.draft; save(); saveItem(it.id);
+      if (left <= 0) { r.attempts[r.attempts.length - 1].action = "max"; finishItem("max"); } else render(); };
+  }
+  const guide = el(`<div class="choose"><p class="lab">${r.pending ? "저장하신 뒤에 아래 두 버튼 중 하나를 고르실 수 있습니다." : "아래 두 버튼 중 하나를 골라 주세요."}</p>${BUTTON_GUIDE}</div>`);
+  if (r.pending) { again.disabled = true; next.disabled = true; guide.classList.add("off"); }
+  again.onclick = () => { last.action = "replay"; save(); again.disabled = true; next.disabled = true; again.innerHTML = "노래가 나오는 중…";
+    playOnce(it.src, again, t => { r.pending = t; save(); saveItem(it.id); render(); }); };
+  next.onclick = () => { last.action = "next"; finishItem("complete"); };
+  if (left > 0) { box.appendChild(guide); box.appendChild(again); box.appendChild(next); }
+  else box.appendChild(el(`<p class="muted">${CFG.maxPlays}번을 모두 들으셨습니다. 저장하시면 다음으로 넘어갑니다.</p>`));
+  body.appendChild(box);
+  if (r.pending) setTimeout(() => ta.focus(), 50);
+  return c;
+}
+function practiceScreen() {
+  const it = CFG.practice[S.prac]; if (!it) { S.step = 4; save(); return itemScreen(); }
+  const c = el(`<div><div class="progress"><span>연습 ${S.prac + 1} / ${CFG.practice.length}</span></div></div>`); c.querySelector(".progress").appendChild(helpButton());
+  c.appendChild(itemCard(it, `연습 문제 ${S.prac + 1}`, () => { S.prac += 1; if (S.prac >= CFG.practice.length) { S.step = 4; } save(); render(); }, true));
+  return c;
+}
+function itemScreen() {
+  if (S.idx === 0 && !S.rec[S.order[0]] && !S.shownStart) {
+    const c = el(`<div><h1>연습이 끝났습니다</h1><div class="card"><p>이제 <b>본 문제 ${CFG.items.length}개</b>를 시작합니다.</p>
+      <ul class="tips"><li>방법은 연습 문제와 같습니다.</li><li>본 문제에서는 정답을 보여 드리지 않습니다.</li><li>문제마다 받아 적기가 끝나면, 들으신 소리에 대한 질문 2개에 답해 주세요.</li></ul>
+      <p class="muted">중간에 쉬고 싶으시면 문제와 문제 사이에서 쉬어 주세요.</p></div><button class="primary" id="go">본 문제 시작</button></div>`);
+    c.querySelector("#go").onclick = () => { S.shownStart = true; save(); render(); }; return c;
+  }
+  const id = S.order[S.idx]; if (!id) { S.step = 5; save(); return finish(); }
+  const it = CFG.items.find(x => x.id === id); S.rec[id] = S.rec[id] || { id, attempts: [], t_start: now(), pos: S.idx + 1 };
+  const n = CFG.items.length;
+  const c = el(`<div><div class="progress"><span>문제 ${S.idx + 1} / ${n}</span></div><div class="bar"><i style="width:${100 * S.idx / n}%"></i></div></div>`); c.querySelector(".progress").appendChild(helpButton());
+  c.appendChild(itemCard(it, `문제 ${S.idx + 1}`, () => { S.idx += 1; save(); render(); }, false));
+  return c;
+}
+function finish() {
+  if (S.submittedAt) {                                // submitted: a clear end screen; the comment can no longer be edited (it is sent at submission)
+    return el(`<div><h1>제출이 완료되었습니다</h1><div class="card"><p>참여해 주셔서 감사합니다.</p><p><b>이제 이 창을 닫으셔도 됩니다.</b></p>
+      <p class="muted">제출됨: ${new Date(S.submittedAt).toLocaleString("ko-KR")}</p></div></div>`);
+  }
+  if (CFG.nh) {                                       // NH (2026-11-08): no comment page; submit right after the last item, retry button only on failure
+    const c = el(`<div><h1>제출하는 중입니다</h1><div class="card"><p id="ms">잠시만 기다려 주세요…</p><div id="rb"></div></div></div>`);
+    const submit = async () => { c.querySelector("#ms").textContent = "잠시만 기다려 주세요…"; c.querySelector("#rb").innerHTML = "";
+      try { await saveMeta(); for (const id of Object.keys(S.rec)) await saveItem(id); const j = await api({ action: "submit" }); S.submittedAt = j ? j.submitted_at : now(); save(); render(); }
+      catch (e) { c.querySelector("#ms").textContent = "제출되지 않았습니다. 인터넷 연결을 확인하신 뒤 아래 버튼을 눌러 주세요.";
+        const b = el(`<button class="primary">다시 제출하기</button>`); b.onclick = submit; c.querySelector("#rb").appendChild(b); } };
+    setTimeout(submit, 0); return c;
+  }
+  const c = el(`<div><h1>모두 마치셨습니다</h1><div class="card"><p>수고하셨습니다. 마지막으로, 어려우셨던 점이나 하고 싶으신 말씀이 있으면 적어 주세요(선택).</p>
+    <textarea id="note" aria-label="의견"></textarea></div><div class="card" id="sb"></div></div>`);
+  const ta = c.querySelector("#note"); ta.value = S.note || ""; ta.oninput = () => { S.note = ta.value; save(); };
+  const sb = c.querySelector("#sb");
+  const st = el(`<p class="muted" style="margin-top:10px">아래 버튼을 누르셔야 끝납니다.</p>`);
+  const b = el(`<button class="primary">제출하기</button>`);
+  b.onclick = async () => { b.disabled = true; ta.readOnly = true; b.textContent = "제출 중…";
+    try { await saveMeta(); for (const id of Object.keys(S.rec)) await saveItem(id); const j = await api({ action: "submit" }); S.submittedAt = j ? j.submitted_at : now(); save(); render(); }
+    catch (e) { b.disabled = false; ta.readOnly = false; b.textContent = "다시 제출하기"; st.textContent = "제출되지 않았습니다. 인터넷 연결을 확인하신 뒤 다시 눌러 주세요."; } };
+  sb.appendChild(b); sb.appendChild(st);
+  return c;
+}
+render(); if (S.pid) resume();
+</script></body></html>
